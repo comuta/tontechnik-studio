@@ -6,7 +6,8 @@ Uebertragung, nicht der aktuelle Wert - der ist an der LED-Kette abzulesen.
 Unbeleuchtete Segmente bleiben in ihrer Zone schwach sichtbar, damit man die
 Bereiche auch bei Stille erkennt. Das hellste Segment rechts ist die Spitze
 der letzten Sekunden. Ohne Verbindung bleibt alles dunkel und die Beschriftung
-sagt, warum.
+sagt, warum: "aus", solange nicht gemessen wird, "kein Signal", wenn die
+Messung laeuft, aber nichts ankommt.
 """
 
 from __future__ import annotations
@@ -56,13 +57,14 @@ class Pegelanzeige(ttk.Frame):
             background=FARBEN["flaeche"],
         )
         self._flaeche.grid(row=0, column=1, sticky="ew", padx=10)
-        self._wert = ttk.Label(self, text="--", style="PegelWert.TLabel", width=11, anchor="e")
+        self._wert = ttk.Label(self, text="aus", style="PegelWert.TLabel", width=11, anchor="e")
         self._wert.grid(row=0, column=2, sticky="ne")
 
         self._db = STILLE_DB
         self._spitze = STILLE_DB
         self._hoechst = STILLE_DB
         self._verbunden = False
+        self._misst = False
         self._segmente: list = []     # (Kennung, Zone, untere dB-Grenze)
         self._farben: list = []       # zuletzt gesetzte Fuellung je Segment
         self._flaeche.bind("<Configure>", lambda _e: self._aufbauen())
@@ -71,6 +73,12 @@ class Pegelanzeige(ttk.Frame):
               hoechst: float = STILLE_DB) -> None:
         self._db, self._spitze, self._verbunden = db, spitze, verbunden
         self._hoechst = hoechst
+        self._misst = True
+        self._zeichnen()
+
+    def ruhe(self) -> None:
+        """Keine Messung: alles dunkel, Beschriftung "aus"."""
+        self._verbunden = self._misst = False
         self._zeichnen()
 
     def _schrift(self):
@@ -123,7 +131,7 @@ class Pegelanzeige(ttk.Frame):
         else:
             for i, (kennung, zone, _unten) in enumerate(self._segmente):
                 self._faerben(i, kennung, ZONEN[zone][1])
-            self._wert.configure(text="kein Signal")
+            self._wert.configure(text="kein Signal" if self._misst else "aus")
 
     def _faerben(self, i: int, kennung, farbe: str) -> None:
         if self._farben[i] != farbe:
