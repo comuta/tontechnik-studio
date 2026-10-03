@@ -1,7 +1,7 @@
 """Hauptfenster: Kopfzeile mit Zustandsanzeige, darunter zwei Haelften.
 
-Links Projekt, REAPER und Aufnahme, rechts die Uebertragungen mit Pegeln und
-darunter der MP3-Mitschnitt. Alles Wichtige ist gleichzeitig sichtbar, es wird
+Links Projekt, REAPER und Aufnahme, rechts die Streams aus streams.toml mit
+Pegeln und darunter der MP3-Mitschnitt. Alles Wichtige ist gleichzeitig sichtbar, es wird
 nirgends gescrollt. Das Protokoll ersetzt auf Knopfdruck beide Haelften.
 """
 
@@ -14,8 +14,9 @@ from tkinter import messagebox, ttk
 from .. import einzelinstanz
 from .. import konfiguration as konf
 from .. import protokoll
-from ..kern.prozesse import Dienst, Dienstverwaltung
+from ..kern.prozesse import Dienstverwaltung
 from ..kern import aufnahme, reaper
+from ..kern.streams import baue_verwaltung, protokolle, streams_laden
 from . import stil
 from .ansicht_protokoll import AnsichtProtokoll
 from .ansicht_start import AnsichtStart
@@ -30,12 +31,15 @@ RAND = 24
 
 
 class Anwendung(tk.Tk):
-    def __init__(self, verwaltung: Dienstverwaltung, horcher=None):
+    def __init__(self, verwaltung: Dienstverwaltung, streams: list, horcher=None,
+                 stream_fehler: str | None = None):
         # WM_CLASS besteht aus zwei Teilen. baseName setzt den ersten, der
         # sonst "python3" hiesse - genau daran scheitert die Zuordnung im Dock,
         # und das Fenster bekommt dann das allgemeine Symbol.
         super().__init__(baseName="tontechnik-studio", className="TontechnikStudio")
         self.verwaltung = verwaltung
+        self.streams = streams
+        self.protokolle = protokolle(streams)
         self.log = protokoll.logger("gui")
 
         self.title("Tontechnik Studio")
@@ -56,6 +60,9 @@ class Anwendung(tk.Tk):
 
         self._baue_kopf()
         self._baue_inhalt()
+
+        if stream_fehler:
+            self.melde(f"streams.toml: {stream_fehler}", fehler=True)
 
         self.protocol("WM_DELETE_WINDOW", self.beenden)
         self.bind("<Control-q>", lambda _e: self.beenden())
@@ -119,11 +126,11 @@ class Anwendung(tk.Tk):
         lampen.grid(row=0, column=1, sticky="e")
         self.lampe_reaper = Lampe(lampen, "REAPER", gross=True)
         self.lampe_aufnahme = Lampe(lampen, "Aufnahme", gross=True)
-        self.lampe_telefon = Lampe(lampen, "Telefon", gross=True)
-        self.lampe_radio = Lampe(lampen, "Radio", gross=True)
+        # Je Stream eine Lampe, in der Reihenfolge von streams.toml.
+        self.lampen_streams = {s.id: Lampe(lampen, s.name, gross=True) for s in self.streams}
         self.lampe_mitschnitt = Lampe(lampen, "Mitschnitt", gross=True)
-        for lampe in (self.lampe_reaper, self.lampe_aufnahme, self.lampe_telefon,
-                      self.lampe_radio, self.lampe_mitschnitt):
+        for lampe in (self.lampe_reaper, self.lampe_aufnahme,
+                      *self.lampen_streams.values(), self.lampe_mitschnitt):
             lampe.pack(side="left", padx=(0, 28))
 
         self.knopf_protokoll = ttk.Button(
@@ -190,8 +197,8 @@ class Anwendung(tk.Tk):
         )
 
     def aktualisieren(self) -> None:
-        self.lampe_telefon.setze(self.verwaltung.laeuft("telefon"))
-        self.lampe_radio.setze(self.verwaltung.laeuft("radio"))
+        for kennung, lampe in self.lampen_streams.items():
+            lampe.setze(self.verwaltung.laeuft(kennung))
         self.lampe_mitschnitt.setze(self.verwaltung.laeuft("mitschnitt"))
         self.lampe_reaper.setze(self._reaper_laeuft, farbe="bereit")
         self.lampe_aufnahme.setze(bool(self.transport and self.transport["nimmt_auf"]))
@@ -234,19 +241,6 @@ class Anwendung(tk.Tk):
         self.destroy()
 
 
-def baue_verwaltung() -> Dienstverwaltung:
-    verwaltung = Dienstverwaltung()
-    umgebung = {"TONTECHNIK_GEHEIMNISSE": str(konf.GEHEIMNISSE)}
-    for schluessel, titel, skript, log in (
-        ("telefon", "Telefonuebertragung", konf.SKRIPT_TELEFON, konf.LOG_TELEFON),
-        ("radio", "Radiouebertragung", konf.SKRIPT_RADIO, konf.LOG_RADIO),
-        ("mithoeren", "Mithoeren", konf.SKRIPT_MITHOEREN, konf.LOG_MITHOEREN),
-        ("mitschnitt", "MP3-Mitschnitt", konf.SKRIPT_MITSCHNITT, konf.LOG_MITSCHNITT),
-    ):
-        verwaltung.registriere(Dienst(schluessel, titel, skript, log, umgebung))
-    return verwaltung
-
-
 def starte() -> None:
     protokoll.einrichten()
     konf.vorbereiten()
@@ -257,4 +251,5 @@ def starte() -> None:
         # Es laeuft bereits eine Instanz. Sie holt ihr Fenster nach vorn.
         return
 
-    Anwendung(baue_verwaltung(), horcher).mainloop()
+    streams, fehler = streams_laden()
+    Anwendung(baue_verwaltung(streams), streams, horcher, fehler).mainloop()

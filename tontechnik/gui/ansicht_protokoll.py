@@ -29,7 +29,7 @@ class AnsichtProtokoll(ttk.Frame):
         ttk.Label(auswahl, text="Quelle").pack(side="left", padx=(0, 10))
         self.quelle = ttk.Combobox(
             auswahl,
-            values=[titel for titel, _ in konf.PROTOKOLLE.values()],
+            values=[titel for titel, _ in anwendung.protokolle],
             state="readonly",
         )
         self.quelle.current(0)
@@ -59,7 +59,7 @@ class AnsichtProtokoll(ttk.Frame):
 
     def _datei(self):
         titel = self.quelle.get()
-        for anzeige, pfad in konf.PROTOKOLLE.values():
+        for anzeige, pfad in self.anwendung.protokolle:
             if anzeige == titel:
                 return pfad
         return konf.PROTOKOLL

@@ -1,0 +1,46 @@
+# Streams fuer Tontechnik Studio.
+#
+# Jeder Eintrag [[stream]] ergibt eine Karte in der rechten Haelfte und eine
+# Lampe in der Kopfzeile, in der Reihenfolge dieser Datei. Nach einer Aenderung
+# die Oberflaeche neu starten.
+#
+# Felder:
+#   id       interner Name, nur a-z, 0-9 und _. Ergibt die Protokolldatei
+#            ~/.local/state/tontechnik/<id>.log. Nicht "mitschnitt".
+#   name     Anzeige auf der Karte und in der Kopfzeile.
+#   skript   Startet den Stream, liegt in skripte/ (oder absoluter Pfad).
+#            Laeuft im Vordergrund und endet sauber auf SIGTERM.
+#   senden   PipeWire-Quelle fuer den Pegel "Senden", solange der Stream laeuft.
+#            Fuer einen Sink dessen Monitor angeben: "<sink>.monitor".
+#   umgebung (optional) Variablen, die das Skript zusaetzlich bekommt.
+#
+#   [stream.test]  (optional) Pegel "Testen": was beim Zuhoerer ankommt.
+#   Laeuft automatisch mit dem Stream und endet mit ihm. Genau eins von:
+#     quelle   PipeWire-Quelle, etwa der Sink einer Mithoerleitung
+#     adresse  Netzwerkstream, etwa die oeffentliche Adresse beim Icecast
+#   dazu optional:
+#     skript   eigenes Skript fuer die Testleitung, startet und endet mit dem
+#              Stream. Protokoll: ~/.local/state/tontechnik/<id>-test.log
+#
+# Zugangsdaten gehoeren nicht hierher, sondern in secrets.env.
+#
+# Platz: Bis zu zwei Streams bekommen grosse Karten, drei und vier kompakte.
+
+[[stream]]
+id = "telefon"
+name = "Kulturtelefon"
+skript = "stream_telefon.sh"
+senden = "TelefonBruecke.monitor"
+
+[stream.test]
+skript = "mithoeren_telefon.sh"
+quelle = "Mithoeren.monitor"
+
+[[stream]]
+id = "radio"
+name = "Segenswelle"
+skript = "stream_radio.sh"
+senden = "reaper_loopback"
+
+[stream.test]
+adresse = "http://segenswelle.de:8000/ECBG-Gelsenkirchen"

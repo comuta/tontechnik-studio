@@ -56,16 +56,13 @@ REAPER_WEB = os.environ.get("TONTECHNIK_REAPER_WEB", "http://127.0.0.1:8080")
 # Standard ist ein maximiertes Fenster, Appleiste und Dock bleiben sichtbar.
 VOLLBILD = os.environ.get("TONTECHNIK_VOLLBILD", "0") == "1"
 
+# Die Streams selbst stehen in streams.toml (Namen, Skripte, Pegelquellen).
+STREAMS = _pfad("TONTECHNIK_STREAMS", BASIS / "streams.toml")
+
 PROTOKOLL = ZUSTAND / "studio.log"
-LOG_TELEFON = ZUSTAND / "telefon.log"
-LOG_RADIO = ZUSTAND / "radio.log"
 LOG_REAPER = ZUSTAND / "reaper.log"
-LOG_MITHOEREN = ZUSTAND / "mithoeren.log"
 LOG_MITSCHNITT = ZUSTAND / "mitschnitt.log"
 
-SKRIPT_TELEFON = SKRIPTE / "stream_telefon.sh"
-SKRIPT_RADIO = SKRIPTE / "stream_radio.sh"
-SKRIPT_MITHOEREN = SKRIPTE / "mithoeren_telefon.sh"
 SKRIPT_MITSCHNITT = SKRIPTE / "mitschnitt_mp3.sh"
 
 # Alle MP3-Mitschnitte an einem Ort, unabhaengig vom Projekt.
@@ -74,22 +71,7 @@ MITSCHNITTE = _pfad("TONTECHNIK_MITSCHNITTE", _musikordner() / "Mitschnitte")
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
 # REAPERs Ausgang, dauerhaft gemessen in der linken Haelfte.
 PEGEL_REAPER = os.environ.get("TONTECHNIK_PEGEL_REAPER", "reaper_loopback")
-PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
-PEGEL_TELEFON_EIN = os.environ.get("TONTECHNIK_PEGEL_TELEFON_EIN", "Mithoeren.monitor")
-PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_loopback")
 PEGEL_MITSCHNITT = os.environ.get("TONTECHNIK_PEGEL_MITSCHNITT", "reaper_loopback")
-RADIO_STREAM = os.environ.get(
-    "TONTECHNIK_RADIO_STREAM", "http://segenswelle.de:8000/ECBG-Gelsenkirchen"
-)
-
-PROTOKOLLE = {
-    "studio": ("Studio", PROTOKOLL),
-    "telefon": ("Telefon", LOG_TELEFON),
-    "radio": ("Radio", LOG_RADIO),
-    "mithoeren": ("Mithoeren", LOG_MITHOEREN),
-    "mitschnitt": ("Mitschnitt", LOG_MITSCHNITT),
-    "reaper": ("REAPER", LOG_REAPER),
-}
 
 
 def vorbereiten() -> None:
