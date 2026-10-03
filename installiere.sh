@@ -55,7 +55,7 @@ Icon=tontechnik-studio
 Terminal=false
 Categories=AudioVideo;Audio;
 StartupNotify=true
-StartupWMClass=TontechnikStudio
+StartupWMClass=tontechnik-studio
 SingleMainWindow=true
 EINTRAG_ENDE
 

@@ -33,10 +33,13 @@ RAND = 24
 class Anwendung(tk.Tk):
     def __init__(self, verwaltung: Dienstverwaltung, streams: list, horcher=None,
                  stream_fehler: str | None = None):
-        # WM_CLASS besteht aus zwei Teilen. baseName setzt den ersten, der
-        # sonst "python3" hiesse - genau daran scheitert die Zuordnung im Dock,
-        # und das Fenster bekommt dann das allgemeine Symbol.
-        super().__init__(baseName="tontechnik-studio", className="TontechnikStudio")
+        # WM_CLASS entsteht allein aus className: Tk nimmt ihn als ersten Teil
+        # und macht daraus mit grossem Anfangsbuchstaben den zweiten, also
+        # ("tontechnik-studio", "Tontechnik-studio"). Der erste Teil entspricht
+        # dem Namen des Starters tontechnik-studio.desktop - daran ordnet GNOME
+        # das Fenster dem Eintrag in der Seitenleiste zu. Sonst erscheint es
+        # als eigenes Programm mit Zahnrad-Symbol.
+        super().__init__(className="tontechnik-studio")
         self.verwaltung = verwaltung
         self.streams = streams
         self.protokolle = protokolle(streams)
