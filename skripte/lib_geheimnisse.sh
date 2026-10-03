@@ -51,18 +51,20 @@ verlange_quelle() {
     if ! hat_quelle "$1"; then
         echo "FEHLER: Quelle $1 nicht gefunden. Vorhanden:" >&2
         pactl list short sources | awk '{print "  " $2}' >&2
+        echo "Einrichtung pruefen: skripte/diagnose.sh --schnell" >&2
         exit 1
     fi
 }
 
-sichere_sink() {
-    local name="$1" beschreibung="${2:-$1}"
-    hat_sink "$name" && return 0
-    echo "Lege Sink $name an."
-    pactl load-module module-null-sink \
-        sink_name="$name" \
-        sink_properties=device.description="$beschreibung" \
-        rate=48000 channels=2 >/dev/null
+# Geraete werden nie per "pactl load-module" nachgeladen - so angelegte Sinks
+# verschwinden beim naechsten Neustart von PipeWire. Sie kommen aus
+# vorlagen/pipewire/50-tontechnik.conf.
+verlange_sink() {
+    if ! hat_sink "$1"; then
+        echo "FEHLER: Sink $1 fehlt. Ist vorlagen/pipewire/50-tontechnik.conf" \
+             "installiert (./installiere.sh)?" >&2
+        exit 1
+    fi
 }
 
 werkzeuge_pruefen() {

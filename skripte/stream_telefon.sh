@@ -20,8 +20,8 @@ ZIEL="sip:${MODERATOR_RUFNUMMER}@${SIP_HOST}"
 
 pulse_verbinden
 verlange_quelle "$QUELLE"
-sichere_sink "$BRUECKE" "Telefonbruecke"
-sichere_sink "$STUMM" "Baresip stumm"
+verlange_sink "$BRUECKE"
+verlange_sink "$STUMM"
 
 # baresip nimmt die Standardgeraete: Eingang ist die aufbereitete Bruecke,
 # Ausgang ein stummer Sink, damit der Konferenzton nicht in die Mischung faellt.
