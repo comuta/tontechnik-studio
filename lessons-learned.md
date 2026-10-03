@@ -200,9 +200,17 @@ plausibel aus" ein belastbares Ergebnis.
 
 ### WM_CLASS besteht aus zwei Teilen
 
-Tk leitet den ersten Teil aus dem Programmnamen ab, also `python3`. Damit findet
+Ohne Angabe heißt das Fenster nach dem Programm, also `python3`. Damit findet
 GNOME keinen Menüeintrag, zeigt das allgemeine Zahnrad und legt einen zweiten
-Dock-Eintrag an. `Tk(baseName=..., className=...)` setzt beide.
+Dock-Eintrag an.
+
+Nachtrag: `baseName` hilft dabei nicht. Beide Teile entstehen allein aus
+`className`, und Tk normalisiert die Schreibweise: Aus `TontechnikStudio`
+wurde `("tontechnikStudio", "Tontechnikstudio")` - passend zu keinem
+`StartupWMClass`. Verlässlich ist `Tk(className="<name des .desktop>")`, hier
+`tontechnik-studio`. Prüfen statt vermuten:
+
+    xwininfo -root -tree | grep -i tontechnik
 
 ### Sperren gehören an den Ordner, nicht an den Benutzer
 
