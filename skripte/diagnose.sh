@@ -12,8 +12,8 @@ export PULSE_SERVER="${PULSE_SERVER:-unix:/run/user/$(id -u)/pulse/native}"
 
 MESSDAUER=3
 LOOP_QUELLE="reaper_loopback"
-SINKS=(TelefonBruecke baresip_silent)
-MESSPUNKTE=(reaper_loopback TelefonBruecke)
+SINKS=(TelefonBruecke baresip_silent Mithoeren mithoeren_stumm)
+MESSPUNKTE=(reaper_loopback TelefonBruecke Mithoeren)
 STREAM="${TONTECHNIK_RADIO_STREAM:-http://segenswelle.de:8000/ECBG-Gelsenkirchen}"
 
 MODUS="alles"

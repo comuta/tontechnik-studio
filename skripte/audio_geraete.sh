@@ -15,6 +15,8 @@ GERAETE=(
     "reaper_loopback|sources"
     "TelefonBruecke|sinks"
     "baresip_silent|sinks"
+    "Mithoeren|sinks"
+    "mithoeren_stumm|sinks"
 )
 
 command -v pactl >/dev/null || { echo "FEHLER: pactl fehlt." >&2; exit 1; }

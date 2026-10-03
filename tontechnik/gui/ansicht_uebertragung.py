@@ -24,8 +24,9 @@ log = logger("ansicht.uebertragung")
 class _Schalter(Karte):
     """Eine Uebertragung: Schalter, Pruefknopf, Pegel, letzte Meldung.
 
-    Der zweite Pegel ist optional und misst einen Netzwerkstream, etwa den
-    Radiostream so, wie ihn ein Zuhoerer bekommt.
+    Der zweite Pegel ist optional und zeigt, was beim Zuhoerer ankommt: beim
+    Radio der Icecast-Stream, beim Telefon die Mithoerleitung. Er misst, solange
+    sein Dienst laeuft oder von Hand geprueft wird. Hoerbar wird dabei nichts.
     """
 
     def __init__(self, master, anwendung, aufbau: dict):
@@ -35,6 +36,7 @@ class _Schalter(Karte):
         self._titel = aufbau["titel"]
         self._protokoll = aufbau["protokoll"]
         self._quelle_aus = aufbau.get("quelle_aus")   # None = keine Pulse-Quelle
+        self._zweit = aufbau.get("zweitdienst")        # eigener Dienst fuer den zweiten Pegel
         self._pruefen = False
 
         kopf = ttk.Frame(self.inhalt, style="Karte.TFrame")
@@ -72,6 +74,16 @@ class _Schalter(Karte):
             knoepfe, text="Pruefen", style="Neben.TButton", command=self.pruefung_umschalten
         )
         self.knopf_pruefen.grid(row=0, column=1, sticky="ew", padx=(10, 0))
+
+        self.knopf_zweit = None
+        if self._zweit:
+            self.knopf_zweit = ttk.Button(
+                knoepfe,
+                text=f"{self._zweit['titel']} starten",
+                style="Neben.TButton",
+                command=lambda: self.umschalten(self._zweit["schluessel"]),
+            )
+            self.knopf_zweit.grid(row=0, column=2, sticky="ew", padx=(10, 0))
 
     # Bedienung ------------------------------------------------------------
 
@@ -112,6 +124,7 @@ class _Schalter(Karte):
     def aktualisieren(self) -> None:
         verwaltung = self.anwendung.verwaltung
         laeuft = verwaltung.laeuft(self.schluessel)
+        zweit_laeuft = bool(self._zweit) and verwaltung.laeuft(self._zweit["schluessel"])
 
         self.lampe.setze(laeuft)
         self.lampe.beschrifte("auf Sendung" if laeuft else "aus")
@@ -122,16 +135,23 @@ class _Schalter(Karte):
         self.knopf_pruefen.configure(
             text="Pruefung beenden" if self._pruefen else "Pruefen"
         )
+        if self.knopf_zweit is not None:
+            self.knopf_zweit.configure(
+                text=f"{self._zweit['titel']} beenden" if zweit_laeuft
+                else f"{self._zweit['titel']} starten"
+            )
 
         # Senderichtung: messen, sobald die Quelle existiert - egal, wer sendet.
         aus_soll = laeuft or self._pruefen or (
             bool(self._quelle_aus) and audio.quelle_vorhanden(self._quelle_aus)
         )
         self._messer_folgen(self.messer_aus, self.anzeige_aus, aus_soll)
-        # Der Netzwerkstream nur, wenn der Dienst laeuft oder von Hand geprueft
-        # wird - er kostet Bandbreite.
+        # Empfangsrichtung nur, wenn ihr Dienst laeuft oder von Hand geprueft
+        # wird - Radiostream wie Mithoerleitung kosten Bandbreite bzw. eine
+        # Leitung. Beim Telefon ist das die Mithoerleitung, sonst der Dienst selbst.
         if self.messer_ein is not None:
-            self._messer_folgen(self.messer_ein, self.anzeige_ein, laeuft or self._pruefen)
+            ein_laeuft = zweit_laeuft if self._zweit else laeuft
+            self._messer_folgen(self.messer_ein, self.anzeige_ein, ein_laeuft or self._pruefen)
 
         self.meldung.configure(text=letzte_zeile(self._protokoll)[:110])
 
@@ -165,7 +185,10 @@ class AnsichtUebertragung(ttk.Frame):
                     "beschreibung": "stream_telefon.sh",
                     "protokoll": konf.LOG_TELEFON,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_TELEFON_AUS),
+                    "pegel_ein": pegel.quelle_pulse(konf.PEGEL_TELEFON_EIN),
                     "quelle_aus": konf.PEGEL_TELEFON_AUS,
+                    "beschriftung_ein": "mitgehoert",
+                    "zweitdienst": {"schluessel": "mithoeren", "titel": "Mithoeren"},
                 },
                 {
                     "schluessel": "radio",
