@@ -6,25 +6,63 @@ genuegt zum Aktualisieren.
 
 ## Einrichtung
 
-    ./installiere.sh        # Symbol und Menueeintrag anlegen
+    ./installiere.sh        # einmalig, wiederholbar
     ./start.sh              # oder ueber das Anwendungsmenue starten
 
-Danach die eigenen Skripte nach `skripte/` legen (siehe
-`skripte/PLATZHALTER.md`) und `secrets.env` entweder dorthin oder nach
-`~/.config/tontechnik/secrets.env`.
+`installiere.sh` richtet einen frischen Ubuntu-Rechner vollstaendig ein:
 
-Fuer die Aufnahmesteuerung in REAPER einmalig unter Einstellungen ->
+* Menueeintrag und Symbol
+* PipeWire-Konfiguration aus `vorlagen/pipewire/` nach
+  `~/.config/pipewire/pipewire.conf.d/`
+* `~/.config/tontechnik/secrets.env` aus `vorlagen/secrets.env.beispiel`,
+  falls noch keine da ist - danach die Zugangsdaten eintragen
+* ALSA-Loopback beim Systemstart laden und den Benutzer in die Gruppe
+  `audio` aufnehmen (fragt nach dem sudo-Passwort)
+
+Fehlende Programme meldet das Skript mit passendem `apt install`. Reste
+frueherer Einrichtungen legt es nach `~/.config/tontechnik/alte-konfiguration/`.
+
+In REAPER danach unter Einstellungen -> Audio -> Device: ALSA, Output device
+`hw:Loopback`, 48000 Hz, 32 Bit. Fuer die Aufnahmesteuerung unter
 Control/OSC/web ein "Web browser interface" auf Port 8080 anlegen. Ohne das
 bleibt der Aufnahmeknopf grau und die Karte sagt, was fehlt.
 
+## Audiowege
+
+REAPER erkennt das TF1 nur ueber ALSA und gibt deshalb auf den ALSA-Loopback
+aus. PipeWire oeffnet dessen Gegenseite als Quelle `reaper_loopback`, beide
+Uebertragungen lesen sie direkt:
+
+    REAPER -> hw:Loopback -> reaper_loopback -+-> stream_radio.sh   -> Icecast
+                                              +-> stream_telefon.sh -> TelefonBruecke -> baresip
+    baresip (Ton der Konferenz) -> baresip_silent (stumm)
+
+Alle Geraete entstehen beim Start von PipeWire aus
+`vorlagen/pipewire/50-tontechnik.conf`. Kein Skript legt Geraete per
+`pactl load-module` an - so angelegte Geraete sind beim naechsten Neustart von
+PipeWire wieder weg. `skripte/audio_geraete.sh` prueft nur und meldet.
+
+Waehrend der Telefonuebertragung sind Standardausgang und -eingang auf
+`baresip_silent` und `TelefonBruecke.monitor` gestellt. Das ist Absicht: Im
+Live-Betrieb soll vom Rechner nichts hoerbar werden, auch nicht der Ton der
+Konferenz.
+
 ## Aufbau
 
-    installiere.sh               Menueeintrag, Symbol, Fensterklasse
+    installiere.sh               Einrichtung, Menueeintrag, Symbol
     start.sh                     Starter (python3 -m tontechnik)
     ressourcen/                  Symbol als PNG und SVG
-    skripte/                     eigene stream_telefon.sh, stream_radio.sh
-      vorlagen/                  Beispiele, mithoeren_telefon.sh, secrets.env.beispiel
-    werkzeuge/probelauf.py       baut die Oberflaeche ohne Bildschirm auf
+    vorlagen/
+      pipewire/50-tontechnik.conf   Audiogeraete
+      secrets.env.beispiel          Zugangsdaten
+      system/                       snd-aloop laden und einstellen
+    skripte/
+      stream_telefon.sh          Telefonuebertragung (ffmpeg + baresip)
+      stream_radio.sh            Radiouebertragung (ffmpeg -> Icecast + MP3)
+      audio_geraete.sh           prueft die Audiogeraete
+      diagnose.sh                zeigt die ganze Kette, aendert nichts
+      pruefe_geheimnisse.sh      sucht Zugangsdaten im Checkout
+      lib_geheimnisse.sh         gemeinsame Funktionen der Skripte
     tontechnik/
       konfiguration.py           alle Pfade und Konstanten an einer Stelle
       protokoll.py               Protokollierung
@@ -50,54 +88,25 @@ bleibt der Aufnahmeknopf grau und die Karte sagt, was fehlt.
 Keine Datei ueberschreitet rund 200 Zeilen. Die Oberflaeche kennt keine
 Fachlogik, der Kern kein Tkinter.
 
-## Pruefen ohne Bildschirm
-
-    python3 werkzeuge/probelauf.py
-
-Baut alle Ansichten gegen eine Tkinter-Attrappe auf und durchlaeuft jeden
-Bedienpfad. Faengt Tippfehler und falsche Aufrufe ab, bevor sie vor dem
-Gottesdienst auffallen. Meldungen ueber fehlende Skripte oder fehlendes
-REAPER sind dabei normal.
-
 ## Uebertragungen und Pegel
 
 Die App startet ausschliesslich die Skripte aus `skripte/` und liest deren
-Ausgabe mit. Sie prueft weder Quellen noch Zugangsdaten - was im Skript
-passiert, ist dessen Sache. Unter jeder Karte steht die letzte Zeile, die das
-Skript geschrieben hat.
+Ausgabe mit. Unter jeder Karte steht die letzte Zeile, die das Skript
+geschrieben hat.
 
-Je Uebertragung gibt es zwei Pegelanzeigen:
+baresip braucht keine eigene Konfiguration: `stream_telefon.sh` erzeugt bei
+jedem Start eine vollstaendige in einem temporaeren Ordner und loescht sie
+beim Beenden wieder. `~/.baresip/` wird nicht gelesen.
 
 | Uebertragung | gesendet | empfangen |
 |---|---|---|
-| Telefon | `TelefonBruecke.monitor` | `Mithoeren.monitor`, sobald die Mithoerleitung laeuft |
-| Radio | `reaper_sip.monitor` | der Icecast-Stream, wie ihn ein Zuhoerer bekommt |
+| Telefon | `TelefonBruecke.monitor` (aufbereitet) | - |
+| Radio | `reaper_loopback` | der Icecast-Stream, wie ihn ein Zuhoerer bekommt |
 
 Gemessen wird mit je einem eigenen ffmpeg, das nur mitliest. Die Skala reicht
 von -60 bis 0 dB, der dunkle Strich ist die Spitze der letzten Sekunden. Bricht
 eine Quelle weg, versucht die Messung alle drei Sekunden neu und zeigt so
 lange "kein Signal".
-
-## Mithoeren der Telefonuebertragung
-
-Die sendende Leitung laesst sich nicht selbst abhoeren - eine Konferenz spielt
-einem Teilnehmer den eigenen Ton nicht zurueck. Mit einer zweiten Rufnummer
-geht es aber: `mithoeren_telefon.sh` waehlt die Teilnehmer-Rufnummer an,
-genau wie ein Zuhoerer, und legt den Ton in den Sink `Mithoeren`.
-
-Dafuer in der Fritz!Box ein zweites IP-Telefon anlegen und die Zugangsdaten als
-`SIP_MITHOEREN_USER`, `SIP_MITHOEREN_PASS` und `TEILNEHMER_RUFNUMMER`
-eintragen. Mit `MITHOEREN_AUSGANG` geht der Ton zusaetzlich auf einen
-Kopfhoerer. Als Mikrofon dieser Leitung dient ein stummer Sink, damit nichts in
-die Konferenz zurueckgeht.
-
-Drei Punkte dazu:
-
-* Es sind dann zwei gleichzeitige Gespraeche. Die Fritz!Box schafft das, es
-  belegt aber zwei Leitungen und faellt je nach Tarif zweimal an.
-* Auf dem Kopfhoerer hoerst du dich selbst um die Laufzeit der Konferenz
-  verzoegert. Zum Kontrollieren taugt das, zum Mitarbeiten nicht.
-* Den Mithoerton niemals auf die TF1 legen.
 
 ## Bedienung
 
@@ -125,18 +134,25 @@ nichts.
 
 ## Pfade ueberschreiben
 
-`TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`, `TONTECHNIK_GEHEIMNISSE`,
-`TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`, `TONTECHNIK_REAPER_WEB`,
-`TONTECHNIK_PEGEL_TELEFON_AUS`, `TONTECHNIK_PEGEL_TELEFON_EIN`,
+Oberflaeche: `TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`,
+`TONTECHNIK_GEHEIMNISSE`, `TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`,
+`TONTECHNIK_REAPER_WEB`, `TONTECHNIK_PEGEL_TELEFON_AUS`,
 `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
 (auf 0 setzen fuer Fensterbetrieb).
+
+Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
+`TONTECHNIK_SINK_TELEFON`, `TONTECHNIK_SINK_STUMM`, `TONTECHNIK_MITSCHNITT`.
+
+## Fehlersuche
+
+    skripte/diagnose.sh --schnell   Prozesse, Geraete, Loopback, Routing
+    skripte/diagnose.sh             zusaetzlich Pegel und Serverton (ca. 15 s)
 
 ## Protokolle
 
     ~/.local/state/tontechnik/studio.log    Oberflaeche
     ~/.local/state/tontechnik/telefon.log   Telefonuebertragung
     ~/.local/state/tontechnik/radio.log     Radiouebertragung
-    ~/.local/state/tontechnik/mithoeren.log Mithoerleitung
     ~/.local/state/tontechnik/reaper.log    REAPER
 
 Im Reiter "Protokoll" sind sie ohne Terminal einsehbar.
