@@ -56,6 +56,8 @@ SKRIPT_MITSCHNITT = SKRIPTE / "mitschnitt_mp3.sh"
 MITSCHNITTE = AUFNAHMEN / "Mitschnitte"
 
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
+# REAPERs Ausgang, dauerhaft gemessen in der linken Haelfte.
+PEGEL_REAPER = os.environ.get("TONTECHNIK_PEGEL_REAPER", "reaper_loopback")
 PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
 PEGEL_TELEFON_EIN = os.environ.get("TONTECHNIK_PEGEL_TELEFON_EIN", "Mithoeren.monitor")
 PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_loopback")

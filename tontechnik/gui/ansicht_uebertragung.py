@@ -4,14 +4,14 @@ darunter der separate MP3-Mitschnitt.
 Die App startet nur die Skripte aus skripte/. Deren Ausgabe steht im
 Protokoll, nicht auf den Karten. Jede Uebertragung hat zwei Pegel:
 
-  Senden  was hinausgeht. Misst, sobald die Quelle existiert - auch bei einem
-          Stream, den jemand von Hand gestartet hat.
+  Senden  was hinausgeht. Misst nur, solange der Stream laeuft. REAPERs
+          Ausgang zeigt die linke Haelfte dauerhaft.
   Testen  was beim Zuhoerer ankommt: beim Radio der Icecast-Stream, beim
           Telefon die Mithoerleitung. Laeuft automatisch mit der Uebertragung
           und endet mit ihr. Hoerbar wird dabei nichts.
 
 Neben jedem Pegel steht der hoechste Stand der laufenden Uebertragung bzw.
-des Tests. Er beginnt mit jedem Start neu.
+des Tests. Er beginnt mit jedem Start neu, weil die Messung dann neu startet.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from __future__ import annotations
 from tkinter import ttk
 
 from .. import konfiguration as konf
-from ..kern import audio, pegel
+from ..kern import pegel
 from ..protokoll import logger
 from .karte_mitschnitt import KarteMitschnitt
 from .pegelanzeige import Pegelanzeige
@@ -40,8 +40,6 @@ class _Schalter(Karte):
         self.anwendung = anwendung
         self.schluessel = aufbau["schluessel"]
         self._titel = aufbau["titel"]
-        self._lief = False
-        self._quelle_aus = aufbau["quelle_aus"]
         # Eigener Dienst fuer den Testpegel (Mithoerleitung), sonst None.
         self._testdienst = aufbau.get("testdienst")
 
@@ -95,7 +93,7 @@ class _Schalter(Karte):
             messer.start()
         elif not soll and messer.aktiv:
             messer.stopp()
-            anzeige.setze(pegel.STILLE_DB, pegel.STILLE_DB, False)
+            anzeige.ruhe()
 
     def _paare(self) -> list:
         return [(self.messer_aus, self.anzeige_aus), (self.messer_ein, self.anzeige_ein)]
@@ -115,12 +113,6 @@ class _Schalter(Karte):
             verwaltung.stopp(self._testdienst)
             test_laeuft = False
 
-        # Mit jedem Start zaehlt der Hoechststand neu. Der Testpegel startet
-        # ohnehin mit der Uebertragung, der Sendepegel misst schon vorher.
-        if laeuft and not self._lief:
-            self.messer_aus.neu_beginnen()
-        self._lief = laeuft
-
         self.lampe.setze(laeuft)
         self.lampe.beschrifte("auf Sendung" if laeuft else "aus")
         self.knopf.configure(
@@ -128,9 +120,8 @@ class _Schalter(Karte):
             style="Stopp.TButton" if laeuft else "Aktion.TButton",
         )
 
-        aus_soll = laeuft or audio.quelle_vorhanden(self._quelle_aus)
         ein_soll = test_laeuft if self._testdienst else laeuft
-        self._messer_folgen(self.messer_aus, self.anzeige_aus, aus_soll)
+        self._messer_folgen(self.messer_aus, self.anzeige_aus, laeuft)
         self._messer_folgen(self.messer_ein, self.anzeige_ein, ein_soll)
 
     def beenden(self) -> None:
@@ -163,7 +154,6 @@ class AnsichtUebertragung(ttk.Frame):
                     "titel": "Telefon",
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_TELEFON_AUS),
                     "pegel_ein": pegel.quelle_pulse(konf.PEGEL_TELEFON_EIN),
-                    "quelle_aus": konf.PEGEL_TELEFON_AUS,
                     "testdienst": "mithoeren",
                 },
                 {
@@ -171,7 +161,6 @@ class AnsichtUebertragung(ttk.Frame):
                     "titel": "Radio",
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_RADIO_AUS),
                     "pegel_ein": pegel.quelle_netz(konf.RADIO_STREAM),
-                    "quelle_aus": konf.PEGEL_RADIO_AUS,
                 },
             )
         ]

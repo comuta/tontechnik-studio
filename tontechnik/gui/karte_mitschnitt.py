@@ -11,7 +11,7 @@ from pathlib import Path
 from tkinter import ttk
 
 from .. import konfiguration as konf
-from ..kern import audio, pegel
+from ..kern import pegel
 from ..kern.ausgabe import letzte_zeile
 from ..protokoll import logger
 from .karte_aufnahme import dauer
@@ -34,7 +34,7 @@ class KarteMitschnitt(Karte):
         self.lampe = Lampe(self.kopf_rechts, "gestoppt", stil_rahmen="Karte.TFrame")
         self.lampe.pack(side="right", padx=(0, 18))
 
-        # Zeigt schon vor dem Start, ob Ton ankommt.
+        # Misst nur waehrend des Mitschnitts. REAPERs Ausgang zeigt die linke Haelfte.
         self.messer = pegel.Pegelmesser("mitschnitt", pegel.quelle_pulse(konf.PEGEL_MITSCHNITT))
         self.anzeige = Pegelanzeige(self.inhalt, "Aufnahme", skala=True)
         self.anzeige.grid(row=0, column=0, sticky="ew")
@@ -73,15 +73,13 @@ class KarteMitschnitt(Karte):
 
     def aktualisieren(self) -> None:
         laeuft = self.anwendung.verwaltung.laeuft(SCHLUESSEL)
-        soll = laeuft or audio.quelle_vorhanden(konf.PEGEL_MITSCHNITT)
-        if soll and not self.messer.aktiv:
+        if laeuft and not self.messer.aktiv:
             self.messer.start()
-        elif not soll and self.messer.aktiv:
+        elif not laeuft and self.messer.aktiv:
             self.messer.stopp()
-            self.anzeige.setze(pegel.STILLE_DB, pegel.STILLE_DB, False)
+            self.anzeige.ruhe()
         if laeuft and self._beginn is None:
             self._beginn = time.monotonic()
-            self.messer.neu_beginnen()     # Hoechststand gilt fuer diesen Mitschnitt
         if not laeuft:
             self._beginn = None
 

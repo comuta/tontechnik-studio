@@ -205,6 +205,7 @@ class Anwendung(tk.Tk):
     def _pegel_takt(self) -> None:
         """Eigener, schneller Takt: nur die Pegelanzeigen werden neu gezeichnet."""
         if not self._protokoll_offen:
+            self.links.pegel_zeichnen()
             self.rechts.pegel_zeichnen()
         self.after(PEGEL_MS, self._pegel_takt)
 
@@ -228,6 +229,7 @@ class Anwendung(tk.Tk):
         ):
             return
         self.verwaltung.alle_stoppen()
+        self.links.beenden()
         self.rechts.beenden()
         self.log.info("Oberflaeche beendet")
         self.destroy()

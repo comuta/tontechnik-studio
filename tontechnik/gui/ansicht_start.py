@@ -1,4 +1,5 @@
-"""Linke Haelfte: Projekt anlegen, REAPER starten, Aufnahme steuern.
+"""Linke Haelfte: Projekt anlegen, REAPER starten, Aufnahme steuern und
+REAPERs Ausgang beobachten.
 
 Die Aktionsleiste liegt fest am unteren Rand. Das angelegte Projekt merkt sich
 die Anwendung, damit der MP3-Mitschnitt in dessen Ordner landet.
@@ -14,6 +15,7 @@ from .. import konfiguration as konf
 from ..kern import projekte, reaper
 from ..protokoll import logger
 from .karte_aufnahme import KarteAufnahme
+from .karte_ausgang import KarteAusgang
 from .widgets import Karte
 
 log = logger("ansicht.start")
@@ -81,8 +83,18 @@ class AnsichtStart(ttk.Frame):
         self.aufnahme = KarteAufnahme(self, self.anwendung)
         self.aufnahme.pack(fill="x", pady=(12, 0))
 
+        self.ausgang = KarteAusgang(self, self.anwendung)
+        self.ausgang.pack(fill="x", pady=(12, 0))
+
+    def pegel_zeichnen(self) -> None:
+        self.ausgang.pegel_zeichnen()
+
+    def beenden(self) -> None:
+        self.ausgang.beenden()
+
     def aktualisieren(self) -> None:
         self.aufnahme.aktualisieren()
+        self.ausgang.aktualisieren()
         self.knopf.configure(
             text="Projekt anlegen und REAPER starten"
             if self.mit_reaper.get()

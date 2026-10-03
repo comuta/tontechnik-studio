@@ -61,7 +61,7 @@ class Pegelmesser:
         self._prozess: subprocess.Popen | None = None
         self.db = STILLE_DB
         self.spitze = STILLE_DB
-        self.hoechst = STILLE_DB     # hoechster Stand seit Start bzw. neu_beginnen()
+        self.hoechst = STILLE_DB     # hoechster Stand seit start()
         self.verbunden = False
 
     @property
@@ -83,10 +83,6 @@ class Pegelmesser:
         self.spitze = STILLE_DB
         self.hoechst = STILLE_DB
         self.verbunden = False
-
-    def neu_beginnen(self) -> None:
-        """Hoechststand zuruecksetzen, etwa wenn eine Uebertragung beginnt."""
-        self.hoechst = STILLE_DB
 
     def _prozess_beenden(self) -> None:
         prozess, self._prozess = self._prozess, None
