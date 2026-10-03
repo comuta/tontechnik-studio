@@ -61,6 +61,7 @@ class Pegelmesser:
         self._prozess: subprocess.Popen | None = None
         self.db = STILLE_DB
         self.spitze = STILLE_DB
+        self.hoechst = STILLE_DB     # hoechster Stand seit Start bzw. neu_beginnen()
         self.verbunden = False
 
     @property
@@ -71,6 +72,7 @@ class Pegelmesser:
         if self._laeuft:
             return
         self._laeuft = True
+        self.hoechst = STILLE_DB
         self._faden = threading.Thread(target=self._schleife, daemon=True)
         self._faden.start()
 
@@ -79,7 +81,12 @@ class Pegelmesser:
         self._prozess_beenden()
         self.db = STILLE_DB
         self.spitze = STILLE_DB
+        self.hoechst = STILLE_DB
         self.verbunden = False
+
+    def neu_beginnen(self) -> None:
+        """Hoechststand zuruecksetzen, etwa wenn eine Uebertragung beginnt."""
+        self.hoechst = STILLE_DB
 
     def _prozess_beenden(self) -> None:
         prozess, self._prozess = self._prozess, None
@@ -126,3 +133,4 @@ class Pegelmesser:
             werte.frombytes(rohdaten)
             self.db = _dezibel(werte)
             self.spitze = max(self.db, self.spitze - SPITZE_FALL_DB)
+            self.hoechst = max(self.hoechst, self.db)

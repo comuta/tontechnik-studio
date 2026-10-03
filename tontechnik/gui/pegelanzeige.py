@@ -1,6 +1,8 @@
 """Waagerechte Pegelanzeige im Stil einer LED-Kette.
 
 Ein Segment je dB von -60 bis 0. Gruen bis -12, gelb bis -3, darueber rot.
+Rechts daneben steht der hoechste Stand seit Beginn der Messung bzw. der
+Uebertragung, nicht der aktuelle Wert - der ist an der LED-Kette abzulesen.
 Unbeleuchtete Segmente bleiben in ihrer Zone schwach sichtbar, damit man die
 Bereiche auch bei Stille erkennt. Das hellste Segment rechts ist die Spitze
 der letzten Sekunden. Ohne Verbindung bleibt alles dunkel und die Beschriftung
@@ -59,13 +61,16 @@ class Pegelanzeige(ttk.Frame):
 
         self._db = STILLE_DB
         self._spitze = STILLE_DB
+        self._hoechst = STILLE_DB
         self._verbunden = False
         self._segmente: list = []     # (Kennung, Zone, untere dB-Grenze)
         self._farben: list = []       # zuletzt gesetzte Fuellung je Segment
         self._flaeche.bind("<Configure>", lambda _e: self._aufbauen())
 
-    def setze(self, db: float, spitze: float, verbunden: bool) -> None:
+    def setze(self, db: float, spitze: float, verbunden: bool,
+              hoechst: float = STILLE_DB) -> None:
         self._db, self._spitze, self._verbunden = db, spitze, verbunden
+        self._hoechst = hoechst
         self._zeichnen()
 
     def _schrift(self):
@@ -112,7 +117,8 @@ class Pegelanzeige(ttk.Frame):
                 an = unten < self._db or i == spitze
                 self._faerben(i, kennung, ZONEN[zone][0 if an else 1])
             self._wert.configure(
-                text="still" if self._db <= STILLE_DB + 0.5 else f"{self._db:.0f} dB"
+                text="still" if self._hoechst <= STILLE_DB + 0.5
+                else f"max {self._hoechst:.0f} dB"
             )
         else:
             for i, (kennung, zone, _unten) in enumerate(self._segmente):

@@ -9,6 +9,9 @@ Protokoll, nicht auf den Karten. Jede Uebertragung hat zwei Pegel:
   Testen  was beim Zuhoerer ankommt: beim Radio der Icecast-Stream, beim
           Telefon die Mithoerleitung. Laeuft automatisch mit der Uebertragung
           und endet mit ihr. Hoerbar wird dabei nichts.
+
+Neben jedem Pegel steht der hoechste Stand der laufenden Uebertragung bzw.
+des Tests. Er beginnt mit jedem Start neu.
 """
 
 from __future__ import annotations
@@ -37,6 +40,7 @@ class _Schalter(Karte):
         self.anwendung = anwendung
         self.schluessel = aufbau["schluessel"]
         self._titel = aufbau["titel"]
+        self._lief = False
         self._quelle_aus = aufbau["quelle_aus"]
         # Eigener Dienst fuer den Testpegel (Mithoerleitung), sonst None.
         self._testdienst = aufbau.get("testdienst")
@@ -99,7 +103,7 @@ class _Schalter(Karte):
     def pegel_zeichnen(self) -> None:
         for messer, anzeige in self._paare():
             if messer.aktiv:
-                anzeige.setze(messer.db, messer.spitze, messer.verbunden)
+                anzeige.setze(messer.db, messer.spitze, messer.verbunden, messer.hoechst)
 
     def aktualisieren(self) -> None:
         verwaltung = self.anwendung.verwaltung
@@ -110,6 +114,12 @@ class _Schalter(Karte):
         if test_laeuft and not laeuft:
             verwaltung.stopp(self._testdienst)
             test_laeuft = False
+
+        # Mit jedem Start zaehlt der Hoechststand neu. Der Testpegel startet
+        # ohnehin mit der Uebertragung, der Sendepegel misst schon vorher.
+        if laeuft and not self._lief:
+            self.messer_aus.neu_beginnen()
+        self._lief = laeuft
 
         self.lampe.setze(laeuft)
         self.lampe.beschrifte("auf Sendung" if laeuft else "aus")

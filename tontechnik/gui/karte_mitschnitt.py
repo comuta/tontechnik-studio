@@ -64,7 +64,9 @@ class KarteMitschnitt(Karte):
 
     def pegel_zeichnen(self) -> None:
         if self.messer.aktiv:
-            self.anzeige.setze(self.messer.db, self.messer.spitze, self.messer.verbunden)
+            self.anzeige.setze(
+                self.messer.db, self.messer.spitze, self.messer.verbunden, self.messer.hoechst
+            )
 
     def beenden(self) -> None:
         self.messer.stopp()
@@ -79,6 +81,7 @@ class KarteMitschnitt(Karte):
             self.anzeige.setze(pegel.STILLE_DB, pegel.STILLE_DB, False)
         if laeuft and self._beginn is None:
             self._beginn = time.monotonic()
+            self.messer.neu_beginnen()     # Hoechststand gilt fuer diesen Mitschnitt
         if not laeuft:
             self._beginn = None
 
