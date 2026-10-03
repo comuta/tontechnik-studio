@@ -84,8 +84,9 @@ Konferenz.
         widgets.py               Lampe, Karte, Trennlinie
         karte_aufnahme.py        Aufnahme in REAPER starten und beenden
         karte_mitschnitt.py      MP3-Mitschnitt starten und beenden
+        karte_ausgang.py         Pegel von REAPERs Ausgang
         pegelanzeige.py          Balken mit Spitzenmarke
-        ansicht_start.py         linke Haelfte: Projekt, REAPER, Aufnahme
+        ansicht_start.py         linke Haelfte: Projekt, REAPER, Aufnahme, Ausgang
         ansicht_uebertragung.py  rechte Haelfte: Telefon, Radio, Mitschnitt
         ansicht_protokoll.py     Protokolle mitlesen
 
@@ -108,7 +109,11 @@ Beenden wieder. `~/.baresip/` wird nicht gelesen.
 | Radio | `reaper_loopback` | der Icecast-Stream, wie ihn ein Zuhoerer bekommt |
 | Mitschnitt | `reaper_loopback` (Pegel "Aufnahme") | - |
 
-"Senden" misst, sobald die Quelle existiert, also schon vor dem Start.
+Die Pegel rechts messen nur, solange ihr Stream bzw. der Mitschnitt laeuft,
+sonst steht dort "aus". Was aus REAPER kommt, zeigt die Karte
+"REAPER-Ausgang" links dauerhaft (Pegel "Summe" auf `reaper_loopback`) - dort
+ist schon vor jedem Start zu sehen, ob Ton da ist.
+
 "Testen" laeuft automatisch mit der Uebertragung und endet mit ihr - auch
 wenn die Uebertragung von selbst abbricht. Faellt nur die Testleitung aus,
 sendet die Uebertragung weiter.
@@ -119,8 +124,8 @@ schwach sichtbar, das einzelne helle Segment rechts ist die Spitze der
 letzten Sekunden. Rechts neben jedem Pegel steht der hoechste Stand des
 laufenden Streams, Tests oder Mitschnitts ("max -12 dB"). Er beginnt mit
 jedem Start neu. Gemessen wird mit je einem eigenen ffmpeg, das nur
-mitliest. Bricht eine Quelle weg, versucht die Messung alle drei Sekunden neu
-und zeigt so lange "kein Signal".
+mitliest. Bricht eine Quelle waehrend der Messung weg, versucht sie es alle
+drei Sekunden neu und zeigt so lange "kein Signal".
 
 ## Mithoeren der Telefonuebertragung
 
@@ -182,7 +187,7 @@ nichts.
 Oberflaeche: `TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`,
 `TONTECHNIK_GEHEIMNISSE`, `TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`,
 `TONTECHNIK_REAPER_WEB`, `TONTECHNIK_PEGEL_TELEFON_AUS`,
-`TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_PEGEL_MITSCHNITT`,
+`TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_PEGEL_MITSCHNITT`, `TONTECHNIK_PEGEL_REAPER`,
 `TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
 (auf 1 setzen, um im Vollbild zu starten).
 
