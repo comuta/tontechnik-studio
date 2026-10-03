@@ -37,7 +37,8 @@ REAPER_VORLAGE = _pfad(
 )
 REAPER_BEFEHL = os.environ.get("TONTECHNIK_REAPER", "reaper")
 REAPER_WEB = os.environ.get("TONTECHNIK_REAPER_WEB", "http://127.0.0.1:8080")
-VOLLBILD = os.environ.get("TONTECHNIK_VOLLBILD", "1") != "0"
+# Standard ist ein maximiertes Fenster, Appleiste und Dock bleiben sichtbar.
+VOLLBILD = os.environ.get("TONTECHNIK_VOLLBILD", "0") == "1"
 
 PROTOKOLL = ZUSTAND / "studio.log"
 LOG_TELEFON = ZUSTAND / "telefon.log"

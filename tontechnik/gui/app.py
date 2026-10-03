@@ -65,6 +65,8 @@ class Anwendung(tk.Tk):
         self._pegel_takt()
         if konf.VOLLBILD:
             self.vollbild_umschalten(True)
+        else:
+            self.maximieren()
         self.nach_vorn()
         self._takt()
 
@@ -77,16 +79,23 @@ class Anwendung(tk.Tk):
         except tk.TclError:
             pass
 
+    def maximieren(self) -> None:
+        """Fenster auf die volle Arbeitsflaeche, Appleiste und Dock bleiben frei."""
+        try:
+            self.attributes("-zoomed", True)
+        except tk.TclError:
+            # Fenstermanager ohne Maximieren: wenigstens die Bildschirmgroesse.
+            self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+
     def vollbild_umschalten(self, an: bool | None = None) -> None:
+        """F11: Vollbild ueber alles. Zurueck geht es ins maximierte Fenster."""
         self._vollbild = (not self._vollbild) if an is None else an
         try:
             self.attributes("-fullscreen", self._vollbild)
         except tk.TclError:
-            # Fenstermanager ohne Vollbildattribut: wenigstens maximieren.
-            try:
-                self.attributes("-zoomed", self._vollbild)
-            except tk.TclError:
-                pass
+            return
+        if not self._vollbild:
+            self.maximieren()
 
     def nach_vorn(self) -> None:
         """Holt das Fenster in den Vordergrund, auch aus dem Symbolzustand."""
