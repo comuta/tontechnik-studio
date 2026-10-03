@@ -2,10 +2,13 @@
 darunter der separate MP3-Mitschnitt.
 
 Die App startet nur die Skripte aus skripte/ und liest deren Ausgabe mit.
-Gemessen wird davon unabhaengig: Sobald eine Quelle existiert, laeuft die
-Pegelanzeige - auch bei einem Stream, den jemand von Hand gestartet hat.
-Der Knopf "Pruefen" schaltet die Messung zusaetzlich von Hand ein, auch fuer
-den Serverton des Radiostreams.
+Jede Uebertragung hat zwei Pegel:
+
+  Senden  was hinausgeht. Misst, sobald die Quelle existiert - auch bei einem
+          Stream, den jemand von Hand gestartet hat.
+  Testen  was beim Zuhoerer ankommt: beim Radio der Icecast-Stream, beim
+          Telefon die Mithoerleitung. Laeuft automatisch mit der Uebertragung
+          und endet mit ihr. Hoerbar wird dabei nichts.
 """
 
 from __future__ import annotations
@@ -28,83 +31,62 @@ UEBERTRAGUNGEN = ("telefon", "radio", "mithoeren")
 
 
 class _Schalter(Karte):
-    """Eine Uebertragung: Schalter, Pruefknopf, Pegel, letzte Meldung.
-
-    Der zweite Pegel ist optional und zeigt, was beim Zuhoerer ankommt: beim
-    Radio der Icecast-Stream, beim Telefon die Mithoerleitung. Er misst, solange
-    sein Dienst laeuft oder von Hand geprueft wird. Hoerbar wird dabei nichts.
-    """
+    """Eine Uebertragung: Lampe, Senden- und Testpegel, letzte Meldung, Knopf."""
 
     def __init__(self, master, anwendung, aufbau: dict):
-        super().__init__(master, aufbau["titel"], aufbau["beschreibung"])
+        super().__init__(master, aufbau["titel"])
         self.anwendung = anwendung
         self.schluessel = aufbau["schluessel"]
         self._titel = aufbau["titel"]
         self._protokoll = aufbau["protokoll"]
-        self._quelle_aus = aufbau.get("quelle_aus")   # None = keine Pulse-Quelle
-        self._zweit = aufbau.get("zweitdienst")        # eigener Dienst fuer den zweiten Pegel
-        self._pruefen = False
+        self._quelle_aus = aufbau["quelle_aus"]
+        # Eigener Dienst fuer den Testpegel (Mithoerleitung), sonst None.
+        self._testdienst = aufbau.get("testdienst")
 
-        kopf = ttk.Frame(self.inhalt, style="Karte.TFrame")
-        kopf.grid(row=0, column=0, sticky="ew")
-        self.lampe = Lampe(kopf, "aus", stil_rahmen="Karte.TFrame")
-        self.lampe.pack(side="left")
+        self.lampe = Lampe(self.kopf_rechts, "aus", stil_rahmen="Karte.TFrame")
+        self.lampe.pack(side="right")
 
-        self.messer_aus = pegel.Pegelmesser(f"{self.schluessel}-gesendet", aufbau["pegel_aus"])
-        self.anzeige_aus = Pegelanzeige(self.inhalt, "gesendet")
-        self.anzeige_aus.grid(row=1, column=0, sticky="ew", pady=(12, 2))
-        self.messer_ein = self.anzeige_ein = None
-        if aufbau.get("pegel_ein"):
-            self.messer_ein = pegel.Pegelmesser(
-                f"{self.schluessel}-empfangen", aufbau["pegel_ein"]
-            )
-            self.anzeige_ein = Pegelanzeige(self.inhalt, aufbau["beschriftung_ein"])
-            self.anzeige_ein.grid(row=2, column=0, sticky="ew", pady=(2, 0))
+        self.messer_aus = pegel.Pegelmesser(f"{self.schluessel}-senden", aufbau["pegel_aus"])
+        self.messer_ein = pegel.Pegelmesser(f"{self.schluessel}-testen", aufbau["pegel_ein"])
+        self.anzeige_aus = Pegelanzeige(self.inhalt, "Senden")
+        self.anzeige_aus.grid(row=0, column=0, sticky="ew", pady=(0, 4))
+        self.anzeige_ein = Pegelanzeige(self.inhalt, "Testen", skala=True)
+        self.anzeige_ein.grid(row=1, column=0, sticky="ew")
 
         self.meldung = ttk.Label(self.inhalt, text="", style="KarteKlein.TLabel", anchor="w")
-        self.meldung.grid(row=3, column=0, sticky="ew", pady=(10, 0))
-
-        knoepfe = ttk.Frame(self.inhalt, style="Karte.TFrame")
-        knoepfe.grid(row=4, column=0, sticky="ew", pady=(12, 0))
-        knoepfe.columnconfigure(0, weight=1)
+        self.meldung.grid(row=2, column=0, sticky="ew", pady=(6, 0))
 
         self.knopf = ttk.Button(
-            knoepfe,
+            self.inhalt,
             text=f"{self._titel} starten",
             style="Aktion.TButton",
-            command=lambda: self.umschalten(self.schluessel),
+            command=self.umschalten,
         )
-        self.knopf.grid(row=0, column=0, sticky="ew")
-
-        self.knopf_pruefen = ttk.Button(
-            knoepfe, text="Pruefen", style="Neben.TButton", command=self.pruefung_umschalten
-        )
-        self.knopf_pruefen.grid(row=0, column=1, sticky="ew", padx=(10, 0))
-
-        self.knopf_zweit = None
-        if self._zweit:
-            self.knopf_zweit = ttk.Button(
-                knoepfe,
-                text=f"{self._zweit['titel']} starten",
-                style="Neben.TButton",
-                command=lambda: self.umschalten(self._zweit["schluessel"]),
-            )
-            self.knopf_zweit.grid(row=0, column=2, sticky="ew", padx=(10, 0))
+        self.knopf.grid(row=3, column=0, sticky="ew", pady=(10, 0))
 
     # Bedienung ------------------------------------------------------------
 
-    def umschalten(self, schluessel: str) -> None:
-        try:
-            self.anwendung.verwaltung.umschalten(schluessel)
-        except OSError as fehler:
-            log.warning("%s: %s", schluessel, fehler)
-            self.anwendung.melde(str(fehler), fehler=True)
-            return
-        self.anwendung.aktualisieren()
-
-    def pruefung_umschalten(self) -> None:
-        """Messung von Hand ein- oder ausschalten, unabhaengig vom Dienst."""
-        self._pruefen = not self._pruefen
+    def umschalten(self) -> None:
+        """Startet oder beendet die Uebertragung samt Testleitung."""
+        verwaltung = self.anwendung.verwaltung
+        if verwaltung.laeuft(self.schluessel):
+            if self._testdienst:
+                verwaltung.stopp(self._testdienst)
+            verwaltung.stopp(self.schluessel)
+        else:
+            try:
+                verwaltung.start(self.schluessel)
+            except OSError as fehler:
+                log.warning("%s: %s", self.schluessel, fehler)
+                self.anwendung.melde(str(fehler), fehler=True)
+                return
+            # Faellt die Testleitung aus, laeuft die Uebertragung trotzdem.
+            if self._testdienst:
+                try:
+                    verwaltung.start(self._testdienst)
+                except OSError as fehler:
+                    log.warning("%s: %s", self._testdienst, fehler)
+                    self.anwendung.melde(f"Testleitung: {fehler}", fehler=True)
         self.anwendung.aktualisieren()
 
     # Messung --------------------------------------------------------------
@@ -117,10 +99,7 @@ class _Schalter(Karte):
             anzeige.setze(pegel.STILLE_DB, pegel.STILLE_DB, False)
 
     def _paare(self) -> list:
-        paare = [(self.messer_aus, self.anzeige_aus)]
-        if self.messer_ein is not None:
-            paare.append((self.messer_ein, self.anzeige_ein))
-        return paare
+        return [(self.messer_aus, self.anzeige_aus), (self.messer_ein, self.anzeige_ein)]
 
     def pegel_zeichnen(self) -> None:
         for messer, anzeige in self._paare():
@@ -130,7 +109,12 @@ class _Schalter(Karte):
     def aktualisieren(self) -> None:
         verwaltung = self.anwendung.verwaltung
         laeuft = verwaltung.laeuft(self.schluessel)
-        zweit_laeuft = bool(self._zweit) and verwaltung.laeuft(self._zweit["schluessel"])
+        test_laeuft = bool(self._testdienst) and verwaltung.laeuft(self._testdienst)
+
+        # Endet die Uebertragung von selbst, endet auch die Testleitung.
+        if test_laeuft and not laeuft:
+            verwaltung.stopp(self._testdienst)
+            test_laeuft = False
 
         self.lampe.setze(laeuft)
         self.lampe.beschrifte("auf Sendung" if laeuft else "aus")
@@ -138,26 +122,11 @@ class _Schalter(Karte):
             text=f"{self._titel} beenden" if laeuft else f"{self._titel} starten",
             style="Stopp.TButton" if laeuft else "Aktion.TButton",
         )
-        self.knopf_pruefen.configure(
-            text="Pruefung beenden" if self._pruefen else "Pruefen"
-        )
-        if self.knopf_zweit is not None:
-            self.knopf_zweit.configure(
-                text=f"{self._zweit['titel']} beenden" if zweit_laeuft
-                else f"{self._zweit['titel']} starten"
-            )
 
-        # Senderichtung: messen, sobald die Quelle existiert - egal, wer sendet.
-        aus_soll = laeuft or self._pruefen or (
-            bool(self._quelle_aus) and audio.quelle_vorhanden(self._quelle_aus)
-        )
+        aus_soll = laeuft or audio.quelle_vorhanden(self._quelle_aus)
+        ein_soll = test_laeuft if self._testdienst else laeuft
         self._messer_folgen(self.messer_aus, self.anzeige_aus, aus_soll)
-        # Empfangsrichtung nur, wenn ihr Dienst laeuft oder von Hand geprueft
-        # wird - Radiostream wie Mithoerleitung kosten Bandbreite bzw. eine
-        # Leitung. Beim Telefon ist das die Mithoerleitung, sonst der Dienst selbst.
-        if self.messer_ein is not None:
-            ein_laeuft = zweit_laeuft if self._zweit else laeuft
-            self._messer_folgen(self.messer_ein, self.anzeige_ein, ein_laeuft or self._pruefen)
+        self._messer_folgen(self.messer_ein, self.anzeige_ein, ein_soll)
 
         self.meldung.configure(text=letzte_zeile(self._protokoll)[:110])
 
@@ -189,23 +158,19 @@ class AnsichtUebertragung(ttk.Frame):
                 {
                     "schluessel": "telefon",
                     "titel": "Telefon",
-                    "beschreibung": "Ruft die Konferenz an und sendet die Telefonsumme.",
                     "protokoll": konf.LOG_TELEFON,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_TELEFON_AUS),
                     "pegel_ein": pegel.quelle_pulse(konf.PEGEL_TELEFON_EIN),
                     "quelle_aus": konf.PEGEL_TELEFON_AUS,
-                    "beschriftung_ein": "mitgehoert",
-                    "zweitdienst": {"schluessel": "mithoeren", "titel": "Mithoeren"},
+                    "testdienst": "mithoeren",
                 },
                 {
                     "schluessel": "radio",
                     "titel": "Radio",
-                    "beschreibung": "Sendet die Summe an den Icecast-Server.",
                     "protokoll": konf.LOG_RADIO,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_RADIO_AUS),
                     "pegel_ein": pegel.quelle_netz(konf.RADIO_STREAM),
                     "quelle_aus": konf.PEGEL_RADIO_AUS,
-                    "beschriftung_ein": "vom Server",
                 },
             )
         ]
@@ -220,6 +185,7 @@ class AnsichtUebertragung(ttk.Frame):
     def pegel_zeichnen(self) -> None:
         for schalter in self.schalter:
             schalter.pegel_zeichnen()
+        self.mitschnitt.pegel_zeichnen()
 
     def aktualisieren(self) -> None:
         for schalter in self.schalter:
@@ -231,3 +197,4 @@ class AnsichtUebertragung(ttk.Frame):
     def beenden(self) -> None:
         for schalter in self.schalter:
             schalter.beenden()
+        self.mitschnitt.beenden()
