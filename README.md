@@ -94,9 +94,9 @@ Fachlogik, der Kern kein Tkinter.
 
 ## Uebertragungen und Pegel
 
-Die App startet ausschliesslich die Skripte aus `skripte/` und liest deren
-Ausgabe mit. Unter jeder Karte steht die letzte Zeile, die das Skript
-geschrieben hat.
+Die App startet ausschliesslich die Skripte aus `skripte/`. Deren Ausgabe
+steht im Protokoll (Knopf oben rechts), nicht auf den Karten. In der
+Oberflaeche heissen die Uebertragungen "Streams".
 
 baresip braucht keine eigene Konfiguration: Die Skripte erzeugen bei jedem
 Start eine vollstaendige in einem temporaeren Ordner und loeschen sie beim
@@ -116,7 +116,9 @@ sendet die Uebertragung weiter.
 Die Pegel sind LED-Ketten mit einem Segment je dB von -60 bis 0: gruen bis
 -12, gelb bis -3, darueber rot. Unbeleuchtete Segmente bleiben in ihrer Zone
 schwach sichtbar, das einzelne helle Segment rechts ist die Spitze der
-letzten Sekunden. Gemessen wird mit je einem eigenen ffmpeg, das nur
+letzten Sekunden. Rechts neben jedem Pegel steht der hoechste Stand des
+laufenden Streams, Tests oder Mitschnitts ("max -12 dB"). Er beginnt mit
+jedem Start neu. Gemessen wird mit je einem eigenen ffmpeg, das nur
 mitliest. Bricht eine Quelle weg, versucht die Messung alle drei Sekunden neu
 und zeigt so lange "kein Signal".
 
@@ -142,7 +144,7 @@ das, es belegt aber zwei Leitungen und faellt je nach Tarif zweimal an.
 Rechts unten laesst sich ein MP3-Mitschnitt der Summe starten, unabhaengig von
 REAPER und den Uebertragungen. Klang wie beim Radio, 192 kbit/s. Wurde in
 dieser Sitzung ein Projekt angelegt, landet die Datei in dessen Ordner
-`Mitschnitt/`, sonst in `~/Aufnahmen/Mitschnitte/`. "Alle Uebertragungen
+`Mitschnitt/`, sonst in `~/Aufnahmen/Mitschnitte/`. "Alle Streams
 beenden" laesst den Mitschnitt weiterlaufen. Das Radio schneidet nicht mehr
 selbst mit.
 
