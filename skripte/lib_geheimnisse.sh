@@ -67,6 +67,47 @@ verlange_sink() {
     fi
 }
 
+baresip_module() {
+    local ordner
+    for ordner in /usr/lib/baresip/modules /usr/lib/*/baresip/modules \
+                  /usr/local/lib/baresip/modules; do
+        [ -f "$ordner/pulse.so" ] && { echo "$ordner"; return 0; }
+    done
+    echo "FEHLER: baresip-Modul pulse.so fehlt (Paket baresip installieren)." >&2
+    exit 1
+}
+
+# Schreibt eine vollstaendige baresip-Konfiguration nach <ordner>, damit keine
+# ~/.baresip/config noetig ist. Nur was fuer einen Anruf ohne Terminal noetig
+# ist: stdio.so fehlt mit Absicht, ohne Terminal beendet es baresip sofort.
+# menu.so fuehrt "/dial" aus.
+# Aufruf: baresip_vorbereiten <ordner> <quelle> <ausgabe-sink> <benutzer> <passwort>
+baresip_vorbereiten() {
+    local ordner="$1" quelle="$2" ausgabe="$3" benutzer="$4" passwort="$5" module
+    module="$(baresip_module)"
+    chmod 700 "$ordner"
+    cat > "$ordner/config" << KONFIG_ENDE
+poll_method             epoll
+sip_cafile              /etc/ssl/certs/ca-certificates.crt
+call_local_timeout      120
+call_max_calls          1
+audio_source            pulse,$quelle
+audio_player            pulse,$ausgabe
+audio_alert             pulse,$ausgabe
+audio_level             no
+audio_buffer            20-160
+module_path             $module
+module                  g711.so
+module                  pulse.so
+module_tmp              uuid.so
+module_tmp              account.so
+module_app              menu.so
+KONFIG_ENDE
+    printf '<sip:%s@%s>;auth_user=%s;auth_pass=%s;regint=600\n' \
+        "$benutzer" "$SIP_HOST" "$benutzer" "$passwort" > "$ordner/accounts"
+    chmod 600 "$ordner/accounts"
+}
+
 werkzeuge_pruefen() {
     local werkzeug fehlt=0
     for werkzeug in "$@"; do

@@ -19,17 +19,6 @@ BRUECKE="${TONTECHNIK_SINK_TELEFON:-TelefonBruecke}"
 STUMM="${TONTECHNIK_SINK_STUMM:-baresip_silent}"
 ZIEL="sip:${MODERATOR_RUFNUMMER}@${SIP_HOST}"
 
-baresip_module() {
-    local ordner
-    for ordner in /usr/lib/baresip/modules /usr/lib/*/baresip/modules \
-                  /usr/local/lib/baresip/modules; do
-        [ -f "$ordner/pulse.so" ] && { echo "$ordner"; return 0; }
-    done
-    echo "FEHLER: baresip-Modul pulse.so fehlt (Paket baresip installieren)." >&2
-    exit 1
-}
-MODULE="$(baresip_module)"
-
 pulse_verbinden
 verlange_quelle "$QUELLE"
 verlange_sink "$BRUECKE"
@@ -43,29 +32,7 @@ pactl set-sink-volume "$BRUECKE" 100%
 pactl set-source-volume "$BRUECKE.monitor" 100%
 
 BS_ORDNER="$(mktemp -d)"
-chmod 700 "$BS_ORDNER"
-# Nur was fuer einen Anruf ohne Terminal noetig ist. stdio.so fehlt mit
-# Absicht: ohne Terminal beendet es baresip sofort. menu.so fuehrt "/dial" aus.
-cat > "$BS_ORDNER/config" << KONFIG_ENDE
-poll_method             epoll
-sip_cafile              /etc/ssl/certs/ca-certificates.crt
-call_local_timeout      120
-call_max_calls          1
-audio_source            pulse,$BRUECKE.monitor
-audio_player            pulse,$STUMM
-audio_alert             pulse,$STUMM
-audio_level             no
-audio_buffer            20-160
-module_path             $MODULE
-module                  g711.so
-module                  pulse.so
-module_tmp              uuid.so
-module_tmp              account.so
-module_app              menu.so
-KONFIG_ENDE
-printf '<sip:%s@%s>;auth_user=%s;auth_pass=%s;regint=600\n' \
-    "$SIP_USER" "$SIP_HOST" "$SIP_USER" "$SIP_PASS" > "$BS_ORDNER/accounts"
-chmod 600 "$BS_ORDNER/accounts"
+baresip_vorbereiten "$BS_ORDNER" "$BRUECKE.monitor" "$STUMM" "$SIP_USER" "$SIP_PASS"
 
 FFMPEG_PID=""
 aufraeumen() {
