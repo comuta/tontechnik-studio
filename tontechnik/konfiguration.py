@@ -7,6 +7,7 @@ Tests und ein zweiter Rechner ohne Codeaenderung laufen.
 from __future__ import annotations
 
 import os
+import subprocess
 from pathlib import Path
 
 HEIM = Path.home()
@@ -21,6 +22,21 @@ def _pfad(variable: str, standard: Path) -> Path:
 
 RESSOURCEN = BASIS / "ressourcen"
 ICON = RESSOURCEN / "tontechnik-studio.png"
+
+def _musikordner() -> Path:
+    """Musikordner laut Desktop (auf Deutsch ~/Musik), sonst ~/Musik."""
+    try:
+        ergebnis = subprocess.run(
+            ["xdg-user-dir", "MUSIC"], capture_output=True, text=True, timeout=3
+        )
+        ordner = ergebnis.stdout.strip()
+        # Ohne Eintrag antwortet xdg-user-dir mit dem Heimordner selbst.
+        if ergebnis.returncode == 0 and ordner and Path(ordner) != HEIM:
+            return Path(ordner)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return HEIM / "Musik"
+
 
 AUFNAHMEN = _pfad("TONTECHNIK_AUFNAHMEN", HEIM / "Aufnahmen")
 ZUSTAND = _pfad("TONTECHNIK_ZUSTAND", HEIM / ".local/state/tontechnik")
@@ -52,8 +68,8 @@ SKRIPT_RADIO = SKRIPTE / "stream_radio.sh"
 SKRIPT_MITHOEREN = SKRIPTE / "mithoeren_telefon.sh"
 SKRIPT_MITSCHNITT = SKRIPTE / "mitschnitt_mp3.sh"
 
-# Ziel des MP3-Mitschnitts, solange in dieser Sitzung kein Projekt angelegt wurde.
-MITSCHNITTE = AUFNAHMEN / "Mitschnitte"
+# Alle MP3-Mitschnitte an einem Ort, unabhaengig vom Projekt.
+MITSCHNITTE = _pfad("TONTECHNIK_MITSCHNITTE", _musikordner() / "Mitschnitte")
 
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
 # REAPERs Ausgang, dauerhaft gemessen in der linken Haelfte.

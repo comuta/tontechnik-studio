@@ -1,13 +1,11 @@
 """Mitschnittkarte: separate MP3-Aufnahme der Summe, unabhaengig von REAPER.
 
-Wurde in dieser Sitzung ein Projekt angelegt, landet die Datei in dessen
-Ordner "Mitschnitt", sonst im allgemeinen Mitschnittordner.
+Alle Mitschnitte landen zentral in konf.MITSCHNITTE (~/Musik/Mitschnitte).
 """
 
 from __future__ import annotations
 
 import time
-from pathlib import Path
 from tkinter import ttk
 
 from .. import konfiguration as konf
@@ -48,12 +46,8 @@ class KarteMitschnitt(Karte):
         )
         self.knopf.grid(row=2, column=0, sticky="ew", pady=(10, 0))
 
-    def _zielordner(self) -> Path:
-        projekt = self.anwendung.projekt
-        return projekt.parent / "Mitschnitt" if projekt else konf.MITSCHNITTE
-
     def umschalten(self) -> None:
-        umgebung = {"TONTECHNIK_MITSCHNITT": str(self._zielordner())}
+        umgebung = {"TONTECHNIK_MITSCHNITT": str(konf.MITSCHNITTE)}
         try:
             self.anwendung.verwaltung.umschalten(SCHLUESSEL, umgebung)
         except OSError as fehler:
@@ -91,9 +85,9 @@ class KarteMitschnitt(Karte):
         if laeuft:
             text = letzte_zeile(konf.LOG_MITSCHNITT)
         else:
-            ordner = self._zielordner()
+            ordner = konf.MITSCHNITTE
             try:
-                ordner = ordner.relative_to(konf.AUFNAHMEN.parent)
+                ordner = "~/" + str(ordner.relative_to(konf.HEIM))
             except ValueError:
                 pass
             text = f"Ziel: {ordner}"

@@ -1,8 +1,7 @@
 """Linke Haelfte: Projekt anlegen, REAPER starten, Aufnahme steuern und
 REAPERs Ausgang beobachten.
 
-Die Aktionsleiste liegt fest am unteren Rand. Das angelegte Projekt merkt sich
-die Anwendung, damit der MP3-Mitschnitt in dessen Ordner landet.
+Die Aktionsleiste liegt fest am unteren Rand.
 """
 
 from __future__ import annotations
@@ -120,7 +119,6 @@ class AnsichtStart(ttk.Frame):
             log.exception("Projekt konnte nicht angelegt werden")
             self._melde(str(fehler), fehler=True)
             return
-        self.anwendung.projekt = projekt
 
         if self.mit_reaper.get():
             try:

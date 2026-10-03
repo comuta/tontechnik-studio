@@ -48,7 +48,6 @@ def lege_an(tag: date, anlass: str, zusatz: str, basis: Path, vorlage: Path) -> 
     name = projektname(tag, anlass, zusatz)
     ordner = basis / tag.strftime("%Y") / name
     ordner.mkdir(parents=True, exist_ok=True)
-    (ordner / "Mitschnitt").mkdir(exist_ok=True)
 
     projekt = ordner / f"{name}.RPP"
     if not projekt.exists():

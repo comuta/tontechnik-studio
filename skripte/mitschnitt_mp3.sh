@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # MP3-Mitschnitt der REAPER-Summe, unabhaengig von den Uebertragungen.
 #
-# Die Datei landet in TONTECHNIK_MITSCHNITT. Die Oberflaeche setzt dort den
-# Ordner "Mitschnitt" des aktuellen Projekts ein, sonst gilt der Standard.
+# Die Datei landet in TONTECHNIK_MITSCHNITT, sonst zentral im Musikordner
+# unter Mitschnitte (~/Musik/Mitschnitte).
 # Klang wie beim Radio, damit der Mitschnitt so klingt wie die Sendung.
 #
 # Laeuft im Vordergrund. SIGTERM beendet ffmpeg und schliesst die Datei sauber.
@@ -15,7 +15,7 @@ source "$SKRIPTORDNER/lib_geheimnisse.sh"
 werkzeuge_pruefen pactl ffmpeg
 
 QUELLE="${TONTECHNIK_QUELLE_MITSCHNITT:-reaper_loopback}"
-ORDNER="${TONTECHNIK_MITSCHNITT:-$HOME/Aufnahmen/Mitschnitte}"
+ORDNER="${TONTECHNIK_MITSCHNITT:-$(xdg-user-dir MUSIC 2>/dev/null || echo "$HOME/Musik")/Mitschnitte}"
 BITRATE="${TONTECHNIK_MITSCHNITT_BITRATE:-192k}"
 
 pulse_verbinden

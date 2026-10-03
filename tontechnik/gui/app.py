@@ -46,7 +46,6 @@ class Anwendung(tk.Tk):
         self._vollbild = False
 
         self.transport = None
-        self.projekt = None          # zuletzt angelegte .RPP, Ziel des Mitschnitts
         self._weckruf = threading.Event()
         if horcher is not None:
             einzelinstanz.lauschen(horcher, self._weckruf)
