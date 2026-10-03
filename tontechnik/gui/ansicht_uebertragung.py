@@ -1,8 +1,8 @@
 """Rechte Haelfte: Telefon und Radio schalten, messen und mitverfolgen,
 darunter der separate MP3-Mitschnitt.
 
-Die App startet nur die Skripte aus skripte/ und liest deren Ausgabe mit.
-Jede Uebertragung hat zwei Pegel:
+Die App startet nur die Skripte aus skripte/. Deren Ausgabe steht im
+Protokoll, nicht auf den Karten. Jede Uebertragung hat zwei Pegel:
 
   Senden  was hinausgeht. Misst, sobald die Quelle existiert - auch bei einem
           Stream, den jemand von Hand gestartet hat.
@@ -17,7 +17,6 @@ from tkinter import ttk
 
 from .. import konfiguration as konf
 from ..kern import audio, pegel
-from ..kern.ausgabe import letzte_zeile
 from ..protokoll import logger
 from .karte_mitschnitt import KarteMitschnitt
 from .pegelanzeige import Pegelanzeige
@@ -31,14 +30,13 @@ UEBERTRAGUNGEN = ("telefon", "radio", "mithoeren")
 
 
 class _Schalter(Karte):
-    """Eine Uebertragung: Lampe, Senden- und Testpegel, letzte Meldung, Knopf."""
+    """Eine Uebertragung: Lampe, Senden- und Testpegel, Knopf."""
 
     def __init__(self, master, anwendung, aufbau: dict):
         super().__init__(master, aufbau["titel"])
         self.anwendung = anwendung
         self.schluessel = aufbau["schluessel"]
         self._titel = aufbau["titel"]
-        self._protokoll = aufbau["protokoll"]
         self._quelle_aus = aufbau["quelle_aus"]
         # Eigener Dienst fuer den Testpegel (Mithoerleitung), sonst None.
         self._testdienst = aufbau.get("testdienst")
@@ -53,16 +51,13 @@ class _Schalter(Karte):
         self.anzeige_ein = Pegelanzeige(self.inhalt, "Testen", skala=True)
         self.anzeige_ein.grid(row=1, column=0, sticky="ew")
 
-        self.meldung = ttk.Label(self.inhalt, text="", style="KarteKlein.TLabel", anchor="w")
-        self.meldung.grid(row=2, column=0, sticky="ew", pady=(6, 0))
-
         self.knopf = ttk.Button(
             self.inhalt,
             text=f"{self._titel} starten",
             style="Aktion.TButton",
             command=self.umschalten,
         )
-        self.knopf.grid(row=3, column=0, sticky="ew", pady=(10, 0))
+        self.knopf.grid(row=2, column=0, sticky="ew", pady=(12, 0))
 
     # Bedienung ------------------------------------------------------------
 
@@ -128,8 +123,6 @@ class _Schalter(Karte):
         self._messer_folgen(self.messer_aus, self.anzeige_aus, aus_soll)
         self._messer_folgen(self.messer_ein, self.anzeige_ein, ein_soll)
 
-        self.meldung.configure(text=letzte_zeile(self._protokoll)[:110])
-
     def beenden(self) -> None:
         for messer, _anzeige in self._paare():
             messer.stopp()
@@ -158,7 +151,6 @@ class AnsichtUebertragung(ttk.Frame):
                 {
                     "schluessel": "telefon",
                     "titel": "Telefon",
-                    "protokoll": konf.LOG_TELEFON,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_TELEFON_AUS),
                     "pegel_ein": pegel.quelle_pulse(konf.PEGEL_TELEFON_EIN),
                     "quelle_aus": konf.PEGEL_TELEFON_AUS,
@@ -167,7 +159,6 @@ class AnsichtUebertragung(ttk.Frame):
                 {
                     "schluessel": "radio",
                     "titel": "Radio",
-                    "protokoll": konf.LOG_RADIO,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_RADIO_AUS),
                     "pegel_ein": pegel.quelle_netz(konf.RADIO_STREAM),
                     "quelle_aus": konf.PEGEL_RADIO_AUS,
