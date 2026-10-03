@@ -44,10 +44,15 @@ LOG_TELEFON = ZUSTAND / "telefon.log"
 LOG_RADIO = ZUSTAND / "radio.log"
 LOG_REAPER = ZUSTAND / "reaper.log"
 LOG_MITHOEREN = ZUSTAND / "mithoeren.log"
+LOG_MITSCHNITT = ZUSTAND / "mitschnitt.log"
 
 SKRIPT_TELEFON = SKRIPTE / "stream_telefon.sh"
 SKRIPT_RADIO = SKRIPTE / "stream_radio.sh"
 SKRIPT_MITHOEREN = SKRIPTE / "mithoeren_telefon.sh"
+SKRIPT_MITSCHNITT = SKRIPTE / "mitschnitt_mp3.sh"
+
+# Ziel des MP3-Mitschnitts, solange in dieser Sitzung kein Projekt angelegt wurde.
+MITSCHNITTE = AUFNAHMEN / "Mitschnitte"
 
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
 PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
@@ -62,6 +67,7 @@ PROTOKOLLE = {
     "telefon": ("Telefon", LOG_TELEFON),
     "radio": ("Radio", LOG_RADIO),
     "mithoeren": ("Mithoeren", LOG_MITHOEREN),
+    "mitschnitt": ("Mitschnitt", LOG_MITSCHNITT),
     "reaper": ("REAPER", LOG_REAPER),
 }
 
