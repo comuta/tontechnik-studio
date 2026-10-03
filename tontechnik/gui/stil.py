@@ -46,6 +46,8 @@ def anwenden(root: tk.Tk) -> dict:
         "abschnitt": (familie, 12, "bold"),
         "text": (familie, 11),
         "klein": (familie, 10),
+        "skala": (familie, 8),
+        "lampe": (familie, 13, "bold"),
         "knopf": (familie, 12, "bold"),
         "fest": (fest, 10),
     }
@@ -84,6 +86,26 @@ def anwenden(root: tk.Tk) -> dict:
     )
     stil.configure(
         "Fehler.TLabel", font=schriften["klein"], foreground=FARBEN["sendung"]
+    )
+    # Lampen in der Kopfzeile, gross genug fuer ein paar Meter Abstand.
+    stil.configure(
+        "LampeGross.TLabel",
+        background=FARBEN["flaeche"],
+        foreground=FARBEN["text"],
+        font=schriften["lampe"],
+    )
+    # Pegelanzeige: Beschriftung links, Zahlenwert rechts.
+    stil.configure(
+        "Pegel.TLabel",
+        background=FARBEN["flaeche"],
+        foreground=FARBEN["text"],
+        font=(familie, 11, "bold"),
+    )
+    stil.configure(
+        "PegelWert.TLabel",
+        background=FARBEN["flaeche"],
+        foreground=FARBEN["gedaempft"],
+        font=(fest, 11),
     )
     stil.configure(
         "Uhr.TLabel",
