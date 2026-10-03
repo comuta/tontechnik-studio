@@ -25,7 +25,7 @@ class AnsichtStart(ttk.Frame):
         self.anwendung = anwendung
 
         # Rueckmeldung ueber dem Knopf, damit der Knopf auf einer Hoehe mit
-        # "Alle Uebertragungen beenden" in der rechten Haelfte liegt.
+        # "Alle Streams beenden" in der rechten Haelfte liegt.
         leiste = ttk.Frame(self, style="TFrame")
         leiste.pack(side="bottom", fill="x", pady=(12, 0))
         self.rueckmeldung = ttk.Label(leiste, text="Bereit.", style="Gedaempft.TLabel")

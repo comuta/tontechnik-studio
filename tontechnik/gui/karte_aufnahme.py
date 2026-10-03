@@ -62,7 +62,7 @@ class KarteAufnahme(Karte):
             self._beginn = None
 
         self.lampe.setze(self._nimmt_auf)
-        self.lampe.beschrifte("Aufnahme laeuft" if self._nimmt_auf else "gestoppt")
+        self.lampe.beschrifte("Aufnahme" if self._nimmt_auf else "gestoppt")
         self.uhr.configure(
             text=dauer(time.monotonic() - self._beginn) if self._beginn else "00:00:00"
         )

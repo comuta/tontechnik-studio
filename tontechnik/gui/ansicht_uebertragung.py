@@ -25,7 +25,7 @@ from .widgets import Karte, Lampe
 
 log = logger("ansicht.uebertragung")
 
-# Was "Alle Uebertragungen beenden" stoppt. Der Mitschnitt gehoert nicht dazu,
+# Was "Alle Streams beenden" stoppt. Der Mitschnitt gehoert nicht dazu,
 # er hat seinen eigenen Knopf.
 UEBERTRAGUNGEN = ("telefon", "radio", "mithoeren")
 
@@ -144,7 +144,7 @@ class AnsichtUebertragung(ttk.Frame):
         leiste.pack(side="bottom", fill="x", pady=(12, 0))
         self.alles_aus = ttk.Button(
             leiste,
-            text="Alle Uebertragungen beenden",
+            text="Alle Streams beenden",
             style="Neben.TButton",
             command=self.alle_beenden,
         )

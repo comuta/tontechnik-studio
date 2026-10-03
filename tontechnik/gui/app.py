@@ -152,7 +152,7 @@ class Anwendung(tk.Tk):
         ttk.Label(self._uebersicht, text="Vorbereitung", style="Spaltentitel.TLabel").grid(
             row=0, column=0, sticky="w", padx=RAND, pady=(0, 10)
         )
-        ttk.Label(self._uebersicht, text="Uebertragung", style="Spaltentitel.TLabel").grid(
+        ttk.Label(self._uebersicht, text="Stream", style="Spaltentitel.TLabel").grid(
             row=0, column=2, sticky="w", padx=RAND, pady=(0, 10)
         )
         self.links = AnsichtStart(self._uebersicht, self)
@@ -223,7 +223,7 @@ class Anwendung(tk.Tk):
         laeuft = [s for s in self.verwaltung.schluessel() if self.verwaltung.laeuft(s)]
         if laeuft and not messagebox.askyesno(
             "Tontechnik Studio",
-            "Es laeuft noch eine Uebertragung oder ein Mitschnitt. Wirklich beenden?",
+            "Es laeuft noch ein Stream oder ein Mitschnitt. Wirklich beenden?",
             parent=self,
         ):
             return
