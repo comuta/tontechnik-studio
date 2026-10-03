@@ -55,7 +55,8 @@ class Dienstverwaltung:
         log.info("%s wurde beendet (Rueckgabewert %s)", schluessel, prozess.returncode)
         return False
 
-    def start(self, schluessel: str) -> None:
+    def start(self, schluessel: str, umgebung: dict | None = None) -> None:
+        """Startet den Dienst. umgebung ergaenzt die festen Variablen des Dienstes."""
         if self.laeuft(schluessel):
             return
         dienst = self._dienste[schluessel]
@@ -72,7 +73,7 @@ class Dienstverwaltung:
                 stdout=datei,
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
-                env={**os.environ, **dienst.umgebung},
+                env={**os.environ, **dienst.umgebung, **(umgebung or {})},
                 close_fds=True,
             )
         log.info("%s gestartet", dienst.titel)
@@ -102,12 +103,12 @@ class Dienstverwaltung:
         self._prozesse.pop(schluessel, None)
         log.info("%s beendet", self._dienste[schluessel].titel)
 
-    def umschalten(self, schluessel: str) -> bool:
+    def umschalten(self, schluessel: str, umgebung: dict | None = None) -> bool:
         """Startet oder stoppt den Dienst. Gibt den neuen Zustand zurueck."""
         if self.laeuft(schluessel):
             self.stopp(schluessel)
             return False
-        self.start(schluessel)
+        self.start(schluessel, umgebung)
         return True
 
     def alle_stoppen(self) -> None:
