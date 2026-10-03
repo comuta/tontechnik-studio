@@ -52,6 +52,7 @@ Konferenz.
 
     installiere.sh               Einrichtung, Menueeintrag, Symbol
     start.sh                     Starter (python3 -m tontechnik)
+    streams.toml                 die Streams: Namen, Skripte, Pegelquellen
     ressourcen/                  Symbol als PNG und SVG
     vorlagen/
       pipewire/50-tontechnik.conf   Audiogeraete
@@ -77,6 +78,7 @@ Konferenz.
         pegel.py                 Pegelmessung ueber ffmpeg
         ausgabe.py               letzte Zeile einer Protokolldatei
         projekte.py              Projektordner und Namensschema
+        streams.py               streams.toml lesen und pruefen
         audio.py                 PipeWire-Quellen pruefen
       gui/
         app.py                   Hauptfenster, zwei Haelften, Zustandsanzeige
@@ -85,9 +87,9 @@ Konferenz.
         karte_aufnahme.py        Aufnahme in REAPER starten und beenden
         karte_mitschnitt.py      MP3-Mitschnitt starten und beenden
         karte_ausgang.py         Pegel von REAPERs Ausgang
-        pegelanzeige.py          Balken mit Spitzenmarke
+        pegelanzeige.py          LED-Kette mit Spitzenmarke
         ansicht_start.py         linke Haelfte: Projekt, REAPER, Aufnahme, Ausgang
-        ansicht_uebertragung.py  rechte Haelfte: Telefon, Radio, Mitschnitt
+        ansicht_uebertragung.py  rechte Haelfte: Streams, Mitschnitt
         ansicht_protokoll.py     Protokolle mitlesen
 
 Keine Datei ueberschreitet rund 200 Zeilen. Die Oberflaeche kennt keine
@@ -133,7 +135,8 @@ Die sendende Leitung laesst sich nicht selbst kontrollieren - eine Konferenz
 spielt einem Teilnehmer den eigenen Ton nicht zurueck. Mit einer zweiten
 Rufnummer geht es aber: `mithoeren_telefon.sh` waehlt die
 Teilnehmer-Rufnummer an, genau wie ein Zuhoerer, und legt den Ton in den Sink
-`Mithoeren`. Sie startet und endet automatisch mit der Telefonuebertragung,
+`Mithoeren`. In `streams.toml` ist sie als Testskript des Telefons
+eingetragen und startet und endet deshalb automatisch mit ihm,
 die Telefonkarte zeigt ihren Pegel als "Testen". Hoerbar
 wird er nirgends, der Rechner bleibt im Live-Betrieb stumm. Als Mikrofon
 dieser Leitung dient der stumme Sink `mithoeren_stumm`, damit nichts in die
@@ -147,18 +150,19 @@ das, es belegt aber zwei Leitungen und faellt je nach Tarif zweimal an.
 ## MP3-Mitschnitt
 
 Rechts unten laesst sich ein MP3-Mitschnitt der Summe starten, unabhaengig von
-REAPER und den Uebertragungen. Klang wie beim Radio, 192 kbit/s. Wurde in
-dieser Sitzung ein Projekt angelegt, landet die Datei in dessen Ordner
-`Mitschnitt/`, sonst in `~/Aufnahmen/Mitschnitte/`. "Alle Streams
+REAPER und den Streams. Klang wie beim Radio, 192 kbit/s. Alle Mitschnitte
+landen zentral im Musikordner unter `Mitschnitte` (auf Deutsch
+`~/Musik/Mitschnitte`, ermittelt mit `xdg-user-dir MUSIC`), benannt nach Datum
+und Uhrzeit. `TONTECHNIK_MITSCHNITTE` legt einen anderen Ordner fest. "Alle Streams
 beenden" laesst den Mitschnitt weiterlaufen. Das Radio schneidet nicht mehr
 selbst mit.
 
 ## Bedienung
 
 Das Fenster oeffnet maximiert, Appleiste und Dock bleiben sichtbar. Es ist
-zweigeteilt: links Projekt, REAPER und
-Aufnahme, rechts die Uebertragungen mit ihren Pegeln und darunter der
-MP3-Mitschnitt. Beide Haelften halten ihren Hauptknopf am unteren Rand auf
+zweigeteilt: links Projekt, REAPER,
+Aufnahme und REAPERs Ausgang, rechts die Streams mit ihren Pegeln und darunter
+der MP3-Mitschnitt. Beide Haelften halten ihren Hauptknopf am unteren Rand auf
 gleicher Hoehe. Gescrollt wird nirgends, der Inhalt ist auf 1760 Punkte
 Breite begrenzt und bleibt mittig. Der Knopf "Protokoll" oben rechts ersetzt
 beide Haelften durch die Protokolle und fuehrt wieder zurueck.
@@ -169,7 +173,7 @@ Ein zweiter Start oeffnet kein zweites Fenster, sondern holt das vorhandene
 nach vorn. Das laeuft ueber einen Unix-Socket im abstrakten Namensraum, der
 mit dem Prozess verschwindet - eine verwaiste Sperrdatei kann es nicht geben.
 
-Die Lampen oben rechts zeigen REAPER, Aufnahme, Telefon, Radio und Mitschnitt.
+Die Lampen oben rechts zeigen REAPER, Aufnahme, jeden Stream und den Mitschnitt.
 
 ## Schnittstelle zwischen Python und den Skripten
 
@@ -178,18 +182,43 @@ SIGTERM an die ganze Gruppe, damit auch ffmpeg und baresip enden. Nach sechs
 Sekunden ohne Reaktion folgt SIGKILL. Die Variable `TONTECHNIK_GEHEIMNISSE`
 wird dabei gesetzt.
 
-Ein drittes Skript wird in `gui/app.py` in `baue_verwaltung()` eingetragen und
-in `ansicht_uebertragung.py` als weiterer Schalter ergaenzt. Sonst aendert sich
-nichts.
+## Einen Stream ergaenzen
+
+Alle Streams stehen in `streams.toml` im Projektordner. Ein neuer Stream
+braucht dort einen Eintrag und ein Skript in `skripte/`, am Code aendert sich
+nichts. Die Felder sind in der Datei selbst erklaert. Beispiel:
+
+    [[stream]]
+    id = "youtube"                 # Protokoll: youtube.log
+    name = "YouTube"               # Anzeige auf Karte und Lampe
+    skript = "stream_youtube.sh"   # in skripte/
+    senden = "reaper_loopback"     # Pegel "Senden"
+
+    [stream.test]                  # optional
+    adresse = "https://..."        # oder: quelle = "<pipewire-quelle>"
+
+Das Skript laeuft im Vordergrund, liest seine Zugangsdaten mit
+`geheimnisse_laden` aus `secrets.env` und endet sauber auf SIGTERM - als
+Vorlage eignet sich `stream_radio.sh`. Ausfuehrbar muss es nicht sein, die
+Oberflaeche startet es mit bash.
+
+Bis zu zwei Streams bekommen grosse Karten, drei und vier kompakte mit dem
+Knopf neben den Pegeln. Mehr passen nicht auf den Bildschirm, die Oberflaeche
+meldet das. Ist `streams.toml` fehlerhaft, startet sie trotzdem - ohne Streams
+und mit der Fehlermeldung rot in der Kopfzeile. `TONTECHNIK_STREAMS` zeigt auf
+eine andere Datei.
+
+Warum TOML und nicht JSON: Die Datei wird von Hand gepflegt, und TOML erlaubt
+Kommentare. Python liest es ab Version 3.11 ohne Zusatzpaket.
 
 ## Pfade ueberschreiben
 
 Oberflaeche: `TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`,
 `TONTECHNIK_GEHEIMNISSE`, `TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`,
-`TONTECHNIK_REAPER_WEB`, `TONTECHNIK_PEGEL_TELEFON_AUS`,
-`TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_PEGEL_MITSCHNITT`, `TONTECHNIK_PEGEL_REAPER`,
-`TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
-(auf 1 setzen, um im Vollbild zu starten).
+`TONTECHNIK_REAPER_WEB`, `TONTECHNIK_STREAMS`, `TONTECHNIK_MITSCHNITTE`,
+`TONTECHNIK_PEGEL_MITSCHNITT`, `TONTECHNIK_PEGEL_REAPER`, `TONTECHNIK_VOLLBILD`
+(auf 1 setzen, um im Vollbild zu starten). Die Pegelquellen der Streams stehen
+in `streams.toml`.
 
 Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
 `TONTECHNIK_SINK_TELEFON`, `TONTECHNIK_SINK_STUMM`, `TONTECHNIK_SINK_MITHOEREN`,
@@ -203,11 +232,10 @@ Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
 
 ## Protokolle
 
-    ~/.local/state/tontechnik/studio.log    Oberflaeche
-    ~/.local/state/tontechnik/telefon.log   Telefonuebertragung
-    ~/.local/state/tontechnik/radio.log     Radiouebertragung
-    ~/.local/state/tontechnik/mithoeren.log Mithoerleitung
-    ~/.local/state/tontechnik/mitschnitt.log MP3-Mitschnitt
-    ~/.local/state/tontechnik/reaper.log    REAPER
+    ~/.local/state/tontechnik/studio.log       Oberflaeche
+    ~/.local/state/tontechnik/<id>.log         je Stream, etwa telefon.log
+    ~/.local/state/tontechnik/<id>-test.log    Testleitung, etwa telefon-test.log
+    ~/.local/state/tontechnik/mitschnitt.log   MP3-Mitschnitt
+    ~/.local/state/tontechnik/reaper.log       REAPER
 
 Ueber den Knopf "Protokoll" oben rechts sind sie ohne Terminal einsehbar.
