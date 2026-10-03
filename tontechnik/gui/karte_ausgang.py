@@ -17,7 +17,7 @@ from .widgets import Karte
 class KarteAusgang(Karte):
     def __init__(self, master, anwendung):
         super().__init__(
-            master, "REAPER-Ausgang", "Quelle fuer alle Streams und den Mitschnitt."
+            master, "REAPER-Ausgang", "Quelle aller Streams und des Mitschnitts."
         )
         self.anwendung = anwendung
         self.messer = pegel.Pegelmesser("reaper", pegel.quelle_pulse(konf.PEGEL_REAPER))
