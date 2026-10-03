@@ -42,6 +42,7 @@ def anwenden(root: tk.Tk) -> dict:
 
     schriften = {
         "titel": (familie, 16, "bold"),
+        "spalte": (familie, 13, "bold"),
         "abschnitt": (familie, 12, "bold"),
         "text": (familie, 11),
         "klein": (familie, 10),
@@ -62,6 +63,13 @@ def anwenden(root: tk.Tk) -> dict:
     )
     stil.configure("Titel.TLabel", font=schriften["titel"], background=FARBEN["flaeche"])
     stil.configure("Abschnitt.TLabel", font=schriften["abschnitt"], background=FARBEN["flaeche"])
+    # Ueberschrift je Bildschirmhaelfte, auf dem Grund statt auf einer Karte.
+    stil.configure(
+        "Spaltentitel.TLabel",
+        font=schriften["spalte"],
+        foreground=FARBEN["gedaempft"],
+        background=FARBEN["grund"],
+    )
     stil.configure(
         "Gedaempft.TLabel", font=schriften["klein"], foreground=FARBEN["gedaempft"]
     )
@@ -140,26 +148,6 @@ def anwenden(root: tk.Tk) -> dict:
     )
     stil.map("Neben.TButton", background=[("active", FARBEN["grund"])])
 
-    stil.configure(
-        "Reiter.TButton",
-        font=schriften["text"],
-        foreground=FARBEN["gedaempft"],
-        background=FARBEN["flaeche"],
-        bordercolor=FARBEN["flaeche"],
-        padding=(14, 8),
-        relief="flat",
-    )
-    stil.map("Reiter.TButton", background=[("active", FARBEN["grund"])])
-
-    stil.configure(
-        "ReiterAktiv.TButton",
-        font=schriften["text"],
-        foreground=FARBEN["text"],
-        background=FARBEN["grund"],
-        bordercolor=FARBEN["grund"],
-        padding=(14, 8),
-        relief="flat",
-    )
 
     stil.configure(
         "TEntry",

@@ -13,7 +13,7 @@ from ..kern import aufnahme, reaper
 from .widgets import Karte, Lampe
 
 
-def _dauer(sekunden: float) -> str:
+def dauer(sekunden: float) -> str:
     sekunden = int(sekunden)
     return f"{sekunden // 3600:02d}:{sekunden % 3600 // 60:02d}:{sekunden % 60:02d}"
 
@@ -68,7 +68,7 @@ class KarteAufnahme(Karte):
         self.lampe.setze(self._nimmt_auf)
         self.lampe.beschrifte("Aufnahme laeuft" if self._nimmt_auf else "gestoppt")
         self.uhr.configure(
-            text=_dauer(time.monotonic() - self._beginn) if self._beginn else "00:00:00"
+            text=dauer(time.monotonic() - self._beginn) if self._beginn else "00:00:00"
         )
 
         if self._bereit:

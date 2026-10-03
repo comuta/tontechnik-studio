@@ -1,8 +1,7 @@
-"""Erste Ansicht: Projekt anlegen und REAPER starten.
+"""Linke Haelfte: Projekt anlegen, REAPER starten, Aufnahme steuern.
 
-Die Aktionsleiste liegt fest am unteren Rand. Der Pfad des Projektordners
-wird bewusst nicht angezeigt - er bringt vor der Aufnahme keinen Nutzen und
-haette die Schaltflaeche aus dem Bild geschoben.
+Die Aktionsleiste liegt fest am unteren Rand. Das angelegte Projekt merkt sich
+die Anwendung, damit der MP3-Mitschnitt in dessen Ordner landet.
 """
 
 from __future__ import annotations
@@ -21,14 +20,16 @@ log = logger("ansicht.start")
 
 
 class AnsichtStart(ttk.Frame):
-    titel = "Vorbereiten"
-
     def __init__(self, master, anwendung):
-        super().__init__(master, style="TFrame", padding=(20, 18))
+        super().__init__(master, style="TFrame")
         self.anwendung = anwendung
 
+        # Rueckmeldung ueber dem Knopf, damit der Knopf auf einer Hoehe mit
+        # "Alle Uebertragungen beenden" in der rechten Haelfte liegt.
         leiste = ttk.Frame(self, style="TFrame")
-        leiste.pack(side="bottom", fill="x", pady=(16, 0))
+        leiste.pack(side="bottom", fill="x", pady=(12, 0))
+        self.rueckmeldung = ttk.Label(leiste, text="Bereit.", style="Gedaempft.TLabel")
+        self.rueckmeldung.pack(anchor="w", pady=(0, 8))
         self.knopf = ttk.Button(
             leiste,
             text="Projekt anlegen und REAPER starten",
@@ -36,8 +37,6 @@ class AnsichtStart(ttk.Frame):
             command=self.anlegen,
         )
         self.knopf.pack(fill="x")
-        self.rueckmeldung = ttk.Label(leiste, text="Bereit.", style="Gedaempft.TLabel")
-        self.rueckmeldung.pack(anchor="w", pady=(8, 0))
 
         karte = Karte(self, "Projekt", "Datum und Anlass bestimmen den Ordnernamen.")
         karte.pack(fill="x")
@@ -109,6 +108,7 @@ class AnsichtStart(ttk.Frame):
             log.exception("Projekt konnte nicht angelegt werden")
             self._melde(str(fehler), fehler=True)
             return
+        self.anwendung.projekt = projekt
 
         if self.mit_reaper.get():
             try:

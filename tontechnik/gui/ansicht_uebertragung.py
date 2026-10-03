@@ -1,4 +1,5 @@
-"""Zweite Ansicht: Telefon und Radio schalten, messen und mitverfolgen.
+"""Rechte Haelfte: Telefon und Radio schalten, messen und mitverfolgen,
+darunter der separate MP3-Mitschnitt.
 
 Die App startet nur die Skripte aus skripte/ und liest deren Ausgabe mit.
 Gemessen wird davon unabhaengig: Sobald eine Quelle existiert, laeuft die
@@ -15,10 +16,15 @@ from .. import konfiguration as konf
 from ..kern import audio, pegel
 from ..kern.ausgabe import letzte_zeile
 from ..protokoll import logger
+from .karte_mitschnitt import KarteMitschnitt
 from .pegelanzeige import Pegelanzeige
 from .widgets import Karte, Lampe
 
 log = logger("ansicht.uebertragung")
+
+# Was "Alle Uebertragungen beenden" stoppt. Der Mitschnitt gehoert nicht dazu,
+# er hat seinen eigenen Knopf.
+UEBERTRAGUNGEN = ("telefon", "radio", "mithoeren")
 
 
 class _Schalter(Karte):
@@ -161,14 +167,12 @@ class _Schalter(Karte):
 
 
 class AnsichtUebertragung(ttk.Frame):
-    titel = "Uebertragen"
-
     def __init__(self, master, anwendung):
-        super().__init__(master, style="TFrame", padding=(20, 18))
+        super().__init__(master, style="TFrame")
         self.anwendung = anwendung
 
         leiste = ttk.Frame(self, style="TFrame")
-        leiste.pack(side="bottom", fill="x", pady=(16, 0))
+        leiste.pack(side="bottom", fill="x", pady=(12, 0))
         self.alles_aus = ttk.Button(
             leiste,
             text="Alle Uebertragungen beenden",
@@ -177,12 +181,15 @@ class AnsichtUebertragung(ttk.Frame):
         )
         self.alles_aus.pack(fill="x")
 
+        self.mitschnitt = KarteMitschnitt(self, anwendung)
+        self.mitschnitt.pack(side="bottom", fill="x")
+
         self.schalter = [
             _Schalter(self, anwendung, aufbau) for aufbau in (
                 {
                     "schluessel": "telefon",
                     "titel": "Telefon",
-                    "beschreibung": "stream_telefon.sh",
+                    "beschreibung": "Ruft die Konferenz an und sendet die Telefonsumme.",
                     "protokoll": konf.LOG_TELEFON,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_TELEFON_AUS),
                     "pegel_ein": pegel.quelle_pulse(konf.PEGEL_TELEFON_EIN),
@@ -193,7 +200,7 @@ class AnsichtUebertragung(ttk.Frame):
                 {
                     "schluessel": "radio",
                     "titel": "Radio",
-                    "beschreibung": "stream_radio.sh",
+                    "beschreibung": "Sendet die Summe an den Icecast-Server.",
                     "protokoll": konf.LOG_RADIO,
                     "pegel_aus": pegel.quelle_pulse(konf.PEGEL_RADIO_AUS),
                     "pegel_ein": pegel.quelle_netz(konf.RADIO_STREAM),
@@ -206,7 +213,8 @@ class AnsichtUebertragung(ttk.Frame):
             schalter.pack(fill="x", pady=(0, 12))
 
     def alle_beenden(self) -> None:
-        self.anwendung.verwaltung.alle_stoppen()
+        for schluessel in UEBERTRAGUNGEN:
+            self.anwendung.verwaltung.stopp(schluessel)
         self.anwendung.aktualisieren()
 
     def pegel_zeichnen(self) -> None:
@@ -216,9 +224,8 @@ class AnsichtUebertragung(ttk.Frame):
     def aktualisieren(self) -> None:
         for schalter in self.schalter:
             schalter.aktualisieren()
-        laeuft_etwas = any(
-            self.anwendung.verwaltung.laeuft(s) for s in self.anwendung.verwaltung.schluessel()
-        )
+        self.mitschnitt.aktualisieren()
+        laeuft_etwas = any(self.anwendung.verwaltung.laeuft(s) for s in UEBERTRAGUNGEN)
         self.alles_aus.state(["!disabled"] if laeuft_etwas else ["disabled"])
 
     def beenden(self) -> None:

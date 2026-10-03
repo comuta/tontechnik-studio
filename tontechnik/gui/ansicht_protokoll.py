@@ -1,4 +1,5 @@
-"""Dritte Ansicht: Protokolle mitlesen, ohne ein Terminal zu oeffnen."""
+"""Protokolle mitlesen, ohne ein Terminal zu oeffnen. Ersetzt auf Knopfdruck
+beide Haelften des Hauptfensters."""
 
 from __future__ import annotations
 
@@ -12,10 +13,8 @@ ZEILEN = 400
 
 
 class AnsichtProtokoll(ttk.Frame):
-    titel = "Protokoll"
-
     def __init__(self, master, anwendung):
-        super().__init__(master, style="TFrame", padding=(20, 18))
+        super().__init__(master, style="TFrame")
         self.anwendung = anwendung
         self._letzter_stand = ""
 
