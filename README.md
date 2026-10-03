@@ -59,7 +59,8 @@ Konferenz.
       system/                       snd-aloop laden und einstellen
     skripte/
       stream_telefon.sh          Telefonuebertragung (ffmpeg + baresip)
-      stream_radio.sh            Radiouebertragung (ffmpeg -> Icecast + MP3)
+      stream_radio.sh            Radiouebertragung (ffmpeg -> Icecast)
+      mitschnitt_mp3.sh          separater MP3-Mitschnitt
       mithoeren_telefon.sh       Mithoerleitung zur Pegelkontrolle
       audio_geraete.sh           prueft die Audiogeraete
       diagnose.sh                zeigt die ganze Kette, aendert nichts
@@ -78,13 +79,14 @@ Konferenz.
         projekte.py              Projektordner und Namensschema
         audio.py                 PipeWire-Quellen pruefen
       gui/
-        app.py                   Hauptfenster, Reiter, Zustandsanzeige
+        app.py                   Hauptfenster, zwei Haelften, Zustandsanzeige
         stil.py                  Farben, Schriften, ttk-Stile
         widgets.py               Lampe, Karte, Trennlinie
-        karte_aufnahme.py        Aufnahme starten und beenden
+        karte_aufnahme.py        Aufnahme in REAPER starten und beenden
+        karte_mitschnitt.py      MP3-Mitschnitt starten und beenden
         pegelanzeige.py          Balken mit Spitzenmarke
-        ansicht_start.py         Projekt anlegen
-        ansicht_uebertragung.py  Telefon und Radio schalten
+        ansicht_start.py         linke Haelfte: Projekt, REAPER, Aufnahme
+        ansicht_uebertragung.py  rechte Haelfte: Telefon, Radio, Mitschnitt
         ansicht_protokoll.py     Protokolle mitlesen
 
 Keine Datei ueberschreitet rund 200 Zeilen. Die Oberflaeche kennt keine
@@ -126,18 +128,32 @@ Dafuer in der Fritz!Box ein zweites IP-Telefon anlegen und die Zugangsdaten als
 eintragen. Es sind dann zwei gleichzeitige Gespraeche: Die Fritz!Box schafft
 das, es belegt aber zwei Leitungen und faellt je nach Tarif zweimal an.
 
+## MP3-Mitschnitt
+
+Rechts unten laesst sich ein MP3-Mitschnitt der Summe starten, unabhaengig von
+REAPER und den Uebertragungen. Klang wie beim Radio, 192 kbit/s. Wurde in
+dieser Sitzung ein Projekt angelegt, landet die Datei in dessen Ordner
+`Mitschnitt/`, sonst in `~/Aufnahmen/Mitschnitte/`. "Alle Uebertragungen
+beenden" laesst den Mitschnitt weiterlaufen. Das Radio schneidet nicht mehr
+selbst mit.
+
 ## Bedienung
 
-Das Fenster oeffnet im Vollbild. F11 schaltet um, Escape verlaesst das
-Vollbild, Strg+Q beendet. Gescrollt wird nirgends: jede Ansicht haelt ihre
-Schaltflaeche am unteren Rand fest, der Inhalt ist auf 900 mal 820 Punkte
-begrenzt und bleibt mittig, damit er im Vollbild nicht auseinanderfaellt.
+Das Fenster oeffnet maximiert, Appleiste und Dock bleiben sichtbar. Es ist
+zweigeteilt: links Projekt, REAPER und
+Aufnahme, rechts die Uebertragungen mit ihren Pegeln und darunter der
+MP3-Mitschnitt. Beide Haelften halten ihren Hauptknopf am unteren Rand auf
+gleicher Hoehe. Gescrollt wird nirgends, der Inhalt ist auf 1760 Punkte
+Breite begrenzt und bleibt mittig. Der Knopf "Protokoll" oben rechts ersetzt
+beide Haelften durch die Protokolle und fuehrt wieder zurueck.
+
+F11 schaltet ins Vollbild und zurueck, Escape verlaesst es, Strg+Q beendet.
 
 Ein zweiter Start oeffnet kein zweites Fenster, sondern holt das vorhandene
 nach vorn. Das laeuft ueber einen Unix-Socket im abstrakten Namensraum, der
 mit dem Prozess verschwindet - eine verwaiste Sperrdatei kann es nicht geben.
 
-Die Lampen oben rechts zeigen REAPER, Aufnahme, Telefon und Radio.
+Die Lampen oben rechts zeigen REAPER, Aufnahme, Telefon, Radio und Mitschnitt.
 
 ## Schnittstelle zwischen Python und den Skripten
 
@@ -156,11 +172,12 @@ Oberflaeche: `TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`,
 `TONTECHNIK_GEHEIMNISSE`, `TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`,
 `TONTECHNIK_REAPER_WEB`, `TONTECHNIK_PEGEL_TELEFON_AUS`,
 `TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
-(auf 0 setzen fuer Fensterbetrieb).
+(auf 1 setzen, um im Vollbild zu starten).
 
 Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
 `TONTECHNIK_SINK_TELEFON`, `TONTECHNIK_SINK_STUMM`, `TONTECHNIK_SINK_MITHOEREN`,
-`TONTECHNIK_SINK_MITHOEREN_STUMM`, `TONTECHNIK_MITSCHNITT`.
+`TONTECHNIK_SINK_MITHOEREN_STUMM`, `TONTECHNIK_MITSCHNITT`,
+`TONTECHNIK_QUELLE_MITSCHNITT`, `TONTECHNIK_MITSCHNITT_BITRATE`.
 
 ## Fehlersuche
 
@@ -173,6 +190,7 @@ Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
     ~/.local/state/tontechnik/telefon.log   Telefonuebertragung
     ~/.local/state/tontechnik/radio.log     Radiouebertragung
     ~/.local/state/tontechnik/mithoeren.log Mithoerleitung
+    ~/.local/state/tontechnik/mitschnitt.log MP3-Mitschnitt
     ~/.local/state/tontechnik/reaper.log    REAPER
 
-Im Reiter "Protokoll" sind sie ohne Terminal einsehbar.
+Ueber den Knopf "Protokoll" oben rechts sind sie ohne Terminal einsehbar.
