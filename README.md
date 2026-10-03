@@ -102,15 +102,23 @@ baresip braucht keine eigene Konfiguration: Die Skripte erzeugen bei jedem
 Start eine vollstaendige in einem temporaeren Ordner und loeschen sie beim
 Beenden wieder. `~/.baresip/` wird nicht gelesen.
 
-| Uebertragung | gesendet | empfangen |
+| Uebertragung | Senden | Testen |
 |---|---|---|
-| Telefon | `TelefonBruecke.monitor` (aufbereitet) | `Mithoeren.monitor`, solange die Mithoerleitung laeuft |
+| Telefon | `TelefonBruecke.monitor` (aufbereitet) | `Mithoeren.monitor`, die Mithoerleitung |
 | Radio | `reaper_loopback` | der Icecast-Stream, wie ihn ein Zuhoerer bekommt |
+| Mitschnitt | `reaper_loopback` (Pegel "Aufnahme") | - |
 
-Gemessen wird mit je einem eigenen ffmpeg, das nur mitliest. Die Skala reicht
-von -60 bis 0 dB, der dunkle Strich ist die Spitze der letzten Sekunden. Bricht
-eine Quelle weg, versucht die Messung alle drei Sekunden neu und zeigt so
-lange "kein Signal".
+"Senden" misst, sobald die Quelle existiert, also schon vor dem Start.
+"Testen" laeuft automatisch mit der Uebertragung und endet mit ihr - auch
+wenn die Uebertragung von selbst abbricht. Faellt nur die Testleitung aus,
+sendet die Uebertragung weiter.
+
+Die Pegel sind LED-Ketten mit einem Segment je dB von -60 bis 0: gruen bis
+-12, gelb bis -3, darueber rot. Unbeleuchtete Segmente bleiben in ihrer Zone
+schwach sichtbar, das einzelne helle Segment rechts ist die Spitze der
+letzten Sekunden. Gemessen wird mit je einem eigenen ffmpeg, das nur
+mitliest. Bricht eine Quelle weg, versucht die Messung alle drei Sekunden neu
+und zeigt so lange "kein Signal".
 
 ## Mithoeren der Telefonuebertragung
 
@@ -118,7 +126,8 @@ Die sendende Leitung laesst sich nicht selbst kontrollieren - eine Konferenz
 spielt einem Teilnehmer den eigenen Ton nicht zurueck. Mit einer zweiten
 Rufnummer geht es aber: `mithoeren_telefon.sh` waehlt die
 Teilnehmer-Rufnummer an, genau wie ein Zuhoerer, und legt den Ton in den Sink
-`Mithoeren`. Die Telefonkarte zeigt dessen Pegel als "mitgehoert". Hoerbar
+`Mithoeren`. Sie startet und endet automatisch mit der Telefonuebertragung,
+die Telefonkarte zeigt ihren Pegel als "Testen". Hoerbar
 wird er nirgends, der Rechner bleibt im Live-Betrieb stumm. Als Mikrofon
 dieser Leitung dient der stumme Sink `mithoeren_stumm`, damit nichts in die
 Konferenz zurueckgeht.
@@ -171,7 +180,8 @@ nichts.
 Oberflaeche: `TONTECHNIK_AUFNAHMEN`, `TONTECHNIK_ZUSTAND`,
 `TONTECHNIK_GEHEIMNISSE`, `TONTECHNIK_VORLAGE`, `TONTECHNIK_REAPER`,
 `TONTECHNIK_REAPER_WEB`, `TONTECHNIK_PEGEL_TELEFON_AUS`,
-`TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
+`TONTECHNIK_PEGEL_TELEFON_EIN`, `TONTECHNIK_PEGEL_RADIO_AUS`, `TONTECHNIK_PEGEL_MITSCHNITT`,
+`TONTECHNIK_RADIO_STREAM`, `TONTECHNIK_VOLLBILD`
 (auf 1 setzen, um im Vollbild zu starten).
 
 Skripte: `TONTECHNIK_QUELLE_TELEFON`, `TONTECHNIK_QUELLE_RADIO`,
