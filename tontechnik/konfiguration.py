@@ -43,15 +43,12 @@ PROTOKOLL = ZUSTAND / "studio.log"
 LOG_TELEFON = ZUSTAND / "telefon.log"
 LOG_RADIO = ZUSTAND / "radio.log"
 LOG_REAPER = ZUSTAND / "reaper.log"
-LOG_MITHOEREN = ZUSTAND / "mithoeren.log"
 
 SKRIPT_TELEFON = SKRIPTE / "stream_telefon.sh"
 SKRIPT_RADIO = SKRIPTE / "stream_radio.sh"
-SKRIPT_MITHOEREN = SKRIPTE / "mithoeren_telefon.sh"
 
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
 PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
-PEGEL_TELEFON_EIN = os.environ.get("TONTECHNIK_PEGEL_TELEFON_EIN", "Mithoeren.monitor")
 PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_sip.monitor")
 RADIO_STREAM = os.environ.get(
     "TONTECHNIK_RADIO_STREAM", "http://segenswelle.de:8000/ECBG-Gelsenkirchen"
@@ -61,7 +58,6 @@ PROTOKOLLE = {
     "studio": ("Studio", PROTOKOLL),
     "telefon": ("Telefon", LOG_TELEFON),
     "radio": ("Radio", LOG_RADIO),
-    "mithoeren": ("Mithoeren", LOG_MITHOEREN),
     "reaper": ("REAPER", LOG_REAPER),
 }
 

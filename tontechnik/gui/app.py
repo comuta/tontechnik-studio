@@ -232,9 +232,6 @@ def baue_verwaltung() -> Dienstverwaltung:
     verwaltung.registriere(
         Dienst("radio", "Radiouebertragung", konf.SKRIPT_RADIO, konf.LOG_RADIO, umgebung)
     )
-    verwaltung.registriere(
-        Dienst("mithoeren", "Mithoeren", konf.SKRIPT_MITHOEREN, konf.LOG_MITHOEREN, umgebung)
-    )
     return verwaltung
 
 
