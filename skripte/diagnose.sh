@@ -11,10 +11,9 @@ export LC_ALL=C   # pactl antwortet sonst auf Deutsch und Filter greifen nicht
 export PULSE_SERVER="${PULSE_SERVER:-unix:/run/user/$(id -u)/pulse/native}"
 
 MESSDAUER=3
-KARTE="alsa_card.platform-snd_aloop.0"
-LOOP_QUELLE="alsa_input.platform-snd_aloop.0.analog-stereo"
-SINKS=(reaper_sip reaper_radio TelefonBruecke baresip_silent Mithoeren mithoeren_stumm)
-MESSPUNKTE=(reaper_sip reaper_radio TelefonBruecke Mithoeren)
+LOOP_QUELLE="reaper_loopback"
+SINKS=(TelefonBruecke baresip_silent)
+MESSPUNKTE=(reaper_loopback TelefonBruecke)
 STREAM="${TONTECHNIK_RADIO_STREAM:-http://segenswelle.de:8000/ECBG-Gelsenkirchen}"
 
 MODUS="alles"
@@ -77,37 +76,32 @@ geraete() {
     done
 }
 
-# --- 3. Loopback-Karte -------------------------------------------------------
+# --- 3. Loopback -------------------------------------------------------------
 loopback() {
     titel "ALSA-Loopback"
     if grep -q "^snd_aloop " /proc/modules; then
-        zeile "Modul snd_aloop" "geladen ($(awk '$1=="snd_aloop"{print $3}' /proc/modules) Nutzer)"
+        zeile "Modul snd_aloop" "geladen"
     else
-        zeile "Modul snd_aloop" "NICHT geladen"
+        zeile "Modul snd_aloop" "NICHT geladen  -> ./installiere.sh"
         return
     fi
 
-    local profil
-    profil="$(pactl list cards \
-        | sed -n "/Name: $KARTE\$/,/^Card #/p" \
-        | sed -n 's/^[[:space:]]*Active Profile:[[:space:]]*//p' | head -1)"
-    if [ -z "$profil" ]; then
-        zeile "Kartenprofil" "Karte nicht gefunden"
-    elif [ "$profil" = "off" ]; then
-        zeile "Kartenprofil" "off  -> PipeWire sieht REAPER nicht"
+    if id -nG | tr ' ' '\n' | grep -qx audio; then
+        zeile "Gruppe audio" "ja"
     else
-        zeile "Kartenprofil" "$profil"
+        zeile "Gruppe audio" "nein  -> Quelle fehlt evtl. nach dem Anmelden"
     fi
 
     if pactl list short sources | awk '{print $2}' | grep -Fxq "$LOOP_QUELLE"; then
-        zeile "Loopback-Quelle" "vorhanden"
+        zeile "$LOOP_QUELLE" "vorhanden"
     else
-        zeile "Loopback-Quelle" "FEHLT"
+        zeile "$LOOP_QUELLE" "FEHLT  -> systemctl --user restart pipewire"
     fi
 
-    local bruecken
-    bruecken="$(pactl list short modules | grep -c "module-loopback.*$LOOP_QUELLE" || true)"
-    zeile "Brücken zu den Sinks" "$bruecken (erwartet: 2)"
+    if pgrep -x reaper >/dev/null; then
+        zeile "REAPER-Ausgabe" "$(grep -m1 '^alsa_outdev=' "$HOME/.config/REAPER/reaper.ini" 2>/dev/null \
+            | cut -d= -f2) (erwartet: hw:Loopback)"
+    fi
 }
 
 # --- 4. Wer sendet wohin ----------------------------------------------------
@@ -142,7 +136,7 @@ messen() {
 
     local name ausgabe mittel spitze
     for name in "${MESSPUNKTE[@]}"; do
-        if ! pactl list short sinks | awk '{print $2}' | grep -Fxq "$name"; then
+        if ! pactl list short sources | awk '{print $2}' | grep -Fxq -e "$name" -e "$name.monitor"; then
             zeile "$name" "nicht vorhanden"
             continue
         fi
@@ -179,9 +173,6 @@ serverton() {
 # --- 7. Dienste --------------------------------------------------------------
 dienste() {
     titel "Dienste"
-    local zustand
-    zustand="$(systemctl --user is-active tontechnik-audio.service 2>/dev/null)"
-    zeile "tontechnik-audio.service" "${zustand:-nicht eingerichtet}"
     for dienst in pipewire pipewire-pulse wireplumber; do
         zeile "$dienst" "$(systemctl --user is-active "$dienst" 2>/dev/null)"
     done
@@ -202,11 +193,10 @@ esac
 
 titel "Kurzdeutung"
 cat << 'HINWEIS'
-  Sink IDLE statt RUNNING      -> REAPER schreibt nicht hinein (Zuweisung prüfen)
-  Sink FEHLT                   -> PipeWire neu gestartet, Geräte weg
-  Sink mehrfach vorhanden      -> Duplikat, entladen mit pactl unload-module <id>
-  Kartenprofil off             -> pactl set-card-profile, siehe audio_aufbau.sh
-  Brücken 0 statt 2            -> systemctl --user restart tontechnik-audio
+  reaper_loopback STILL        -> REAPER läuft nicht oder gibt nicht auf hw:Loopback aus
+  reaper_loopback FEHLT        -> snd-aloop / Gruppe audio prüfen, PipeWire neu starten
+  Sink FEHLT                   -> vorlagen/pipewire/50-tontechnik.conf nicht installiert
+  Gerät mehrfach vorhanden     -> Rest alter Einrichtung, pactl unload-module <id>
   gesendet ok, Server still    -> Verbindung zum Icecast prüfen
 HINWEIS
 echo

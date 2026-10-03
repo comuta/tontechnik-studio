@@ -13,7 +13,7 @@ werkzeuge_pruefen pactl ffmpeg
 geheimnisse_laden
 verlange ICECAST_HOST ICECAST_PORT ICECAST_MOUNT ICECAST_USER ICECAST_PASS
 
-QUELLE="${TONTECHNIK_QUELLE_RADIO:-reaper_radio}"
+QUELLE="${TONTECHNIK_QUELLE_RADIO:-reaper_loopback}"
 MITSCHNITT_ORDNER="${TONTECHNIK_MITSCHNITT:-$HOME/Aufnahmen/Mitschnitte}"
 BITRATE="${ICECAST_BITRATE:-128k}"
 NAME="${ICECAST_NAME:-Uebertragung}"

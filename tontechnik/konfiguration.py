@@ -49,7 +49,7 @@ SKRIPT_RADIO = SKRIPTE / "stream_radio.sh"
 
 # Quellen fuer die Pegelanzeigen. Gemessen wird nur mitgehoert, nie eingegriffen.
 PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
-PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_sip.monitor")
+PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_loopback")
 RADIO_STREAM = os.environ.get(
     "TONTECHNIK_RADIO_STREAM", "http://segenswelle.de:8000/ECBG-Gelsenkirchen"
 )

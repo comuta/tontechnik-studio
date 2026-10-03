@@ -14,7 +14,7 @@ werkzeuge_pruefen pactl ffmpeg baresip
 geheimnisse_laden
 verlange SIP_HOST SIP_USER SIP_PASS MODERATOR_RUFNUMMER
 
-QUELLE="${TONTECHNIK_QUELLE_TELEFON:-reaper_sip}"
+QUELLE="${TONTECHNIK_QUELLE_TELEFON:-reaper_loopback}"
 BRUECKE="${TONTECHNIK_SINK_TELEFON:-TelefonBruecke}"
 STUMM="${TONTECHNIK_SINK_STUMM:-baresip_silent}"
 ZIEL="sip:${MODERATOR_RUFNUMMER}@${SIP_HOST}"
