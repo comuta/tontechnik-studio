@@ -59,6 +59,7 @@ MITSCHNITTE = AUFNAHMEN / "Mitschnitte"
 PEGEL_TELEFON_AUS = os.environ.get("TONTECHNIK_PEGEL_TELEFON_AUS", "TelefonBruecke.monitor")
 PEGEL_TELEFON_EIN = os.environ.get("TONTECHNIK_PEGEL_TELEFON_EIN", "Mithoeren.monitor")
 PEGEL_RADIO_AUS = os.environ.get("TONTECHNIK_PEGEL_RADIO_AUS", "reaper_loopback")
+PEGEL_MITSCHNITT = os.environ.get("TONTECHNIK_PEGEL_MITSCHNITT", "reaper_loopback")
 RADIO_STREAM = os.environ.get(
     "TONTECHNIK_RADIO_STREAM", "http://segenswelle.de:8000/ECBG-Gelsenkirchen"
 )
