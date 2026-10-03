@@ -26,17 +26,13 @@ class KarteAufnahme(Karte):
         self._bereit = False
         self._nimmt_auf = False
 
-        kopf = ttk.Frame(self.inhalt, style="Karte.TFrame")
-        kopf.grid(row=0, column=0, sticky="ew")
-        kopf.columnconfigure(1, weight=1)
-
-        self.lampe = Lampe(kopf, "gestoppt", stil_rahmen="Karte.TFrame")
-        self.lampe.grid(row=0, column=0, sticky="w")
-        self.uhr = ttk.Label(kopf, text="00:00:00", style="Uhr.TLabel")
-        self.uhr.grid(row=0, column=1, sticky="e")
+        self.uhr = ttk.Label(self.kopf_rechts, text="00:00:00", style="Uhr.TLabel")
+        self.uhr.pack(side="right")
+        self.lampe = Lampe(self.kopf_rechts, "gestoppt", stil_rahmen="Karte.TFrame")
+        self.lampe.pack(side="right", padx=(0, 18))
 
         self.hinweis = ttk.Label(self.inhalt, text="", style="KarteKlein.TLabel")
-        self.hinweis.grid(row=1, column=0, sticky="w", pady=(8, 0))
+        self.hinweis.grid(row=1, column=0, sticky="w")
 
         self.knopf = ttk.Button(
             self.inhalt,

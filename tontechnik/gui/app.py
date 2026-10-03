@@ -118,14 +118,14 @@ class Anwendung(tk.Tk):
 
         lampen = ttk.Frame(kopf, style="Kopf.TFrame")
         lampen.grid(row=0, column=1, sticky="e")
-        self.lampe_reaper = Lampe(lampen, "REAPER")
-        self.lampe_aufnahme = Lampe(lampen, "Aufnahme")
-        self.lampe_telefon = Lampe(lampen, "Telefon")
-        self.lampe_radio = Lampe(lampen, "Radio")
-        self.lampe_mitschnitt = Lampe(lampen, "Mitschnitt")
+        self.lampe_reaper = Lampe(lampen, "REAPER", gross=True)
+        self.lampe_aufnahme = Lampe(lampen, "Aufnahme", gross=True)
+        self.lampe_telefon = Lampe(lampen, "Telefon", gross=True)
+        self.lampe_radio = Lampe(lampen, "Radio", gross=True)
+        self.lampe_mitschnitt = Lampe(lampen, "Mitschnitt", gross=True)
         for lampe in (self.lampe_reaper, self.lampe_aufnahme, self.lampe_telefon,
                       self.lampe_radio, self.lampe_mitschnitt):
-            lampe.pack(side="left", padx=(0, 16))
+            lampe.pack(side="left", padx=(0, 28))
 
         self.knopf_protokoll = ttk.Button(
             kopf, text="Protokoll", style="Neben.TButton", command=self.protokoll_umschalten
